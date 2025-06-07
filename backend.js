@@ -33,15 +33,18 @@ app.get('/score', async (req, res) => {
             matchId: MATCH_ID,
             raceTo: $(tds[3]).text().trim(),
             player1: cleanPlayerName($(tds[4])),
-            flag1: $(tds[5]).find('img').attr('src')?.split('/').pop().replace('.png', '').replace('.svg', '') || '',
+            flag1: $(tds[5]).find('img').attr('src')?.replace('..', 'https://www.epbf.com') || '', '').replace('.svg', '') || '',
             score1: $(tds[6]).text().trim(),
             score2: $(tds[7]).text().trim(),
-            flag2: $(tds[8]).find('img').attr('src')?.split('/').pop().replace('.png', '').replace('.svg', '')
+            flag2: $(tds[8]).find('img').attr('src')?.replace('..', 'https://www.epbf.com')
+              || $(tds[9]).find('img').attr('src')?.replace('..', 'https://www.epbf.com')
+              || $(tds[10]).find('img').attr('src')?.replace('..', 'https://www.epbf.com')
+              || '', '').replace('.svg', '')
               || $(tds[9]).find('img').attr('src')?.split('/').pop().replace('.png', '').replace('.svg', '')
               || $(tds[10]).find('img').attr('src')?.split('/').pop().replace('.png', '').replace('.svg', '')
               || '',
             player2: cleanPlayerName($(tds[9])) || cleanPlayerName($(tds[10])),
-            table: $(tds[12]).text().trim()
+            table: $(tds[11]).text().trim()
           };
           found = true;
         }
