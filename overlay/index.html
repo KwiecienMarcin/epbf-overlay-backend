@@ -77,7 +77,7 @@
   <script>
     async function updateOverlay() {
       try {
-        const res = await fetch("https://epbf-overlay-backend.onrender.com/score");
+        const res = await fetch("https://epbf-overlay-backend-production.up.railway.app/score");
         const data = await res.json();
 
         document.getElementById('player1').innerText = data.player1;

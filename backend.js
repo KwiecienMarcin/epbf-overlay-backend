@@ -3,6 +3,8 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const app = express();
 const PORT = process.env.PORT || 3000;
+const cors = require('cors');
+app.use(cors());
 
 const EPBF_URL = 'https://www.epbf.com/tournaments/european-championships/live/1320/draw-results/';
 const MATCH_ID = 'A095'; // <- Tylko ten mecz
