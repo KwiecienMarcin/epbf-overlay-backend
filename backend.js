@@ -19,6 +19,7 @@ function cleanPlayerName(cell) {
 function getFullFlagUrl(src) {
   if (!src) return '';
   const relativePath = src.replace('..', '');
+  if (relativePath.startsWith('https://')) return relativePath;
   return `https://www.epbf.com${relativePath}`;
 }
 
