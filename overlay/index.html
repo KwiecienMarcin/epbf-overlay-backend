@@ -54,11 +54,14 @@
       font-size: 18px;
       margin-top: 5px;
     }
+    #content.hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
   <div id="overlay"></div>
-  <div id="content">
+  <div id="content" class="hidden">
     <div class="players">
       <div class="player" id="leftPlayer">
         <img src="" alt="Left Flag" id="leftFlag">
@@ -80,6 +83,11 @@
         const res = await fetch("https://epbf-overlay-backend-production.up.railway.app/score");
         const data = await res.json();
 
+        if (data.error) {
+          document.getElementById('content').classList.add('hidden');
+          return;
+        }
+
         document.getElementById('player1').innerText = data.player1;
         document.getElementById('player2').innerText = data.player2;
         document.getElementById('score').innerText = `${data.score1} - ${data.score2}`;
@@ -88,9 +96,11 @@
 
         document.getElementById('leftFlag').src = `https://www.epbf.com/media/flags/${data.flag1}.png`;
         document.getElementById('rightFlag').src = `https://www.epbf.com/media/flags/${data.flag2}.png`;
+
+        document.getElementById('content').classList.remove('hidden');
       } catch (e) {
         console.error('Error fetching score:', e);
-        document.getElementById('score').innerText = 'Loading...';
+        document.getElementById('content').classList.add('hidden');
       }
     }
 
