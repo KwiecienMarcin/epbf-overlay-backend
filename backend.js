@@ -25,12 +25,12 @@ app.get('/score', async (req, res) => {
           result = {
             matchId: MATCH_ID,
             raceTo: $(tds[3]).text().trim(),
-            player1: $(tds[4]).text().trim(),
+            player1: $(tds[4]).text().split('\n')[0].trim(),
             flag1: $(tds[5]).find('img').attr('src')?.split('/').pop().replace('.png', '') || '',
             score1: $(tds[6]).text().trim(),
             score2: $(tds[7]).text().trim(),
             flag2: $(tds[8]).find('img').attr('src')?.split('/').pop().replace('.png', '') || '',
-            player2: $(tds[9]).text().trim(),
+            player2: $(tds[9]).text().split('\n')[0].trim(),
             table: $(tds[10]).text().trim()
           };
           found = true;
