@@ -5,7 +5,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const EPBF_URL = 'https://www.epbf.com/tournaments/european-championships/live/1320/draw-results/';
-const MATCH_ID = 'A094'; // <- Tylko ten mecz
+const MATCH_ID = 'A095'; // <- Tylko ten mecz
 
 app.get('/score', async (req, res) => {
   try {

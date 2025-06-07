@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      background: transparent;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
+    #overlay {
+      position: absolute;
+      width: 100vw;
+      height: 100vh;
+      background: url('overlay-background.png') center/contain no-repeat;
+      z-index: 0;
+    }
+    #content {
+      position: absolute;
+      bottom: 8%;
+      width: 100vw;
+      text-align: center;
+      z-index: 1;
+      color: white;
+      text-shadow: 2px 2px 4px #000;
+    }
+    .players {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 30px;
+      margin-bottom: 10px;
+    }
+    .player {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 24px;
+    }
+    .player img {
+      width: 32px;
+      height: 24px;
+    }
+    #score {
+      font-size: 60px;
+      margin-bottom: 6px;
+    }
+    #race {
+      font-size: 20px;
+    }
+    #table {
+      font-size: 18px;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div id="overlay"></div>
+  <div id="content">
+    <div class="players">
+      <div class="player" id="leftPlayer">
+        <img src="" alt="Left Flag" id="leftFlag">
+        <span id="player1">Player 1</span>
+      </div>
+      <div class="player" id="rightPlayer">
+        <span id="player2">Player 2</span>
+        <img src="" alt="Right Flag" id="rightFlag">
+      </div>
+    </div>
+    <div id="score">0 - 0</div>
+    <div id="race">Race to 0</div>
+    <div id="table">Table</div>
+  </div>
+
+  <script>
+    async function updateOverlay() {
+      try {
+        const res = await fetch("https://epbf-overlay-backend.onrender.com/score");
+        const data = await res.json();
+
+        document.getElementById('player1').innerText = data.player1;
+        document.getElementById('player2').innerText = data.player2;
+        document.getElementById('score').innerText = `${data.score1} - ${data.score2}`;
+        document.getElementById('race').innerText = `Race to ${data.raceTo}`;
+        document.getElementById('table').innerText = `Table ${data.table}`;
+
+        document.getElementById('leftFlag').src = `https://www.epbf.com/media/flags/${data.flag1}.png`;
+        document.getElementById('rightFlag').src = `https://www.epbf.com/media/flags/${data.flag2}.png`;
+      } catch (e) {
+        console.error('Error fetching score:', e);
+        document.getElementById('score').innerText = 'Loading...';
+      }
+    }
+
+    updateOverlay();
+    setInterval(updateOverlay, 5000);
+  </script>
+</body>
+</html>
