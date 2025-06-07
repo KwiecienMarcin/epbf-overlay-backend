@@ -7,7 +7,7 @@ const cors = require('cors');
 app.use(cors());
 
 const EPBF_URL = 'https://www.epbf.com/tournaments/european-championships/live/1320/draw-results/';
-const MATCH_ID = 'A095'; // <- Tylko ten mecz
+const MATCH_ID = 'A096'; // <- Tylko ten mecz
 
 app.get('/score', async (req, res) => {
   try {
