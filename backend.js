@@ -36,8 +36,10 @@ app.get('/score', async (req, res) => {
             flag1: $(tds[5]).find('img').attr('src')?.split('/').pop().replace('.png', '').replace('.svg', '') || '',
             score1: $(tds[6]).text().trim(),
             score2: $(tds[7]).text().trim(),
-            flag2: $(tds[8]).find('img').attr('src')?.split('/').pop().replace('.png', '').replace('.svg', '') || '',
-            player2: cleanPlayerName($(tds[9])),
+            flag2: $(tds[8]).find('img').attr('src')?.split('/').pop().replace('.png', '').replace('.svg', '')
+              || $(tds[9]).find('img').attr('src')?.split('/').pop().replace('.png', '').replace('.svg', '')
+              || '',
+            player2: cleanPlayerName($(tds[9])) || cleanPlayerName($(tds[10])),
             table: $(tds[10]).text().trim()
           };
           found = true;
