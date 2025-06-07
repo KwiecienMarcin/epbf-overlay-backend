@@ -18,9 +18,9 @@ function cleanPlayerName(cell) {
 
 function getFullFlagUrl(src) {
   if (!src) return '';
-  const relativePath = src.replace('..', '');
-  if (relativePath.startsWith('https://')) return relativePath;
-  return `https://www.epbf.com${relativePath}`;
+  if (src.startsWith('http')) return src; // already full
+  return `https://www.epbf.com${src.replace('..', '')}`;
+}`;
 }
 
 app.get('/score', async (req, res) => {
@@ -42,7 +42,7 @@ app.get('/score', async (req, res) => {
             player1: cleanPlayerName($(tds[4])),
             flag1: getFullFlagUrl($(tds[5]).find('img').attr('src')),
             score1: $(tds[6]).text().trim(),
-            score2: $(tds[7]).text().trim(),
+            score2: $(tds[8]).text().trim(),
             flag2: getFullFlagUrl($(tds[8]).find('img').attr('src'))
               || getFullFlagUrl($(tds[9]).find('img').attr('src'))
               || getFullFlagUrl($(tds[10]).find('img').attr('src')),
