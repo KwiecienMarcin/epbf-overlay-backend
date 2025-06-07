@@ -19,7 +19,7 @@ function cleanPlayerName(cell) {
 function getFullFlagUrl(src) {
   if (!src) return '';
   if (src.startsWith('http')) return src; // already full
-  return `https://www.epbf.com${src.replace('..', '')}`;
+  return `https://www.epbf.com${src.replace('..', '')}
 }`;
 }
 
