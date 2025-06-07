@@ -12,7 +12,8 @@ const MATCH_ID = 'A094';
 
 function cleanPlayerName(cell) {
   const fullText = cell.text().trim().split('\n').map(s => s.trim()).filter(Boolean);
-  return fullText.length > 0 ? fullText[0] : '';
+  const longName = fullText.find(name => name.includes(' ')); // zawiera imię i nazwisko
+  return longName || fullText[0] || '';
 }
 
 app.get('/score', async (req, res) => {
