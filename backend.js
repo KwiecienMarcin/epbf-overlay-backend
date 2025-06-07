@@ -28,7 +28,7 @@ app.get('/score', async (req, res) => {
       const rowText = $(el).text();
       if (rowText.includes(MATCH_ID)) {
         const tds = $(el).find('td');
-        if (tds.length >= 10) {
+        if (tds.length >= 12) {
           result = {
             matchId: MATCH_ID,
             raceTo: $(tds[3]).text().trim(),
@@ -38,9 +38,10 @@ app.get('/score', async (req, res) => {
             score2: $(tds[7]).text().trim(),
             flag2: $(tds[8]).find('img').attr('src')?.split('/').pop().replace('.png', '').replace('.svg', '')
               || $(tds[9]).find('img').attr('src')?.split('/').pop().replace('.png', '').replace('.svg', '')
+              || $(tds[10]).find('img').attr('src')?.split('/').pop().replace('.png', '').replace('.svg', '')
               || '',
             player2: cleanPlayerName($(tds[9])) || cleanPlayerName($(tds[10])),
-            table: $(tds[10]).text().trim()
+            table: $(tds[12]).text().trim()
           };
           found = true;
         }
