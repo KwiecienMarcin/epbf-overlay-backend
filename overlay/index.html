@@ -3,79 +3,140 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600&display=swap" rel="stylesheet">
   <style>
+    html, body {
+      width: 1920px;
+      height: 1080px;
+    }
     body {
       margin: 0;
       background: transparent;
       overflow: hidden;
-      font-family: sans-serif;
+      font-family: 'Rajdhani', sans-serif;
     }
-    #overlay {
-      position: absolute;
-      width: 100vw;
-      height: 100vh;
-      background: url('overlay-background.png') center/contain no-repeat;
-      z-index: 0;
+    @keyframes pulseRed {
+      0%, 100% { background: #a60000; }
+      50% { background: #ff0000; }
     }
-    #content {
-      position: absolute;
-      bottom: 8%;
-      width: 100vw;
-      text-align: center;
-      z-index: 1;
-      color: white;
-      text-shadow: 2px 2px 4px #000;
-    }
-    .players {
+    #overlay-bar {
+      position: fixed;
+      bottom: 0;
+      width: 1100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(to right, rgba(0, 47, 108, 0) 0%, #002f6c 15%, #002f6c 85%, rgba(0, 47, 108, 0) 100%);
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 30px;
-      margin-bottom: 10px;
+      padding: 1px 8px;
+      color: white;
+      flex-direction: column;
+    }
+    .player-line {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      gap: 4px;
     }
     .player {
       display: flex;
       align-items: center;
-      gap: 10px;
-      font-size: 24px;
+      gap: 4px;
+      font-size: 14px;
+    }
+    .player span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .player img {
-      width: 32px;
-      height: 24px;
+      width: 20px;
+      height: 14px;
+      object-fit: contain;
     }
-    #score {
-      font-size: 60px;
-      margin-bottom: 6px;
-    }
-    #race {
+    .score-box {
+      display: flex;
+      gap: 6px;
       font-size: 20px;
+      font-weight: bold;
+      z-index: 2;
+      justify-content: center;
     }
-    #table {
-      font-size: 18px;
-      margin-top: 5px;
+    .score-box .score {
+      background: #003f8c;
+      padding: 2px 8px;
+      border-radius: 4px;
+      transition: background 0.3s;
     }
-    #content.hidden {
-      display: none;
+    .score-box.decisive .score {
+      animation: pulseRed 1s infinite;
+    }
+    .decor-line {
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(to right, transparent 0%, white 50%, transparent 100%);
+      margin: 1px 0;
+    }
+    #raceToText {
+      font-size: 12px;
+      margin-top: 1px;
+    }
+    .corner-logo {
+      position: fixed;
+      z-index: 3;
+    }
+    #logoLeft {
+      top: 20px;
+      left: 60px;
+      height: 160px;
+      width: auto;
+    }
+    #logoRight {
+      top: 20px;
+      right: 30px;
+      width: 150px;
+      height: 150px;
+    }
+    #tableText {
+      font-size: 20px;
+      font-weight: bold;
+      text-align: center;
+      position: fixed;
+      top: 190px;
+      left: 60px;
+      color: white;
+      text-shadow: 1px 1px 4px black;
     }
   </style>
 </head>
 <body>
-  <div id="overlay"></div>
-  <div id="content" class="hidden">
-    <div class="players">
+  <img id="logoLeft" class="corner-logo" src="austrian_open.png" alt="Austrian Open">
+  <img id="logoRight" class="corner-logo" src="logo_muklacademy_polysk_alpha.png" alt="MuklAcademy">
+
+  <div id="overlay-bar">
+    <div class="decor-line"></div>
+    <div class="player-line">
       <div class="player" id="leftPlayer">
-        <img src="" alt="Left Flag" id="leftFlag">
+        <img id="leftFlag" src="" alt="flag1">
         <span id="player1">Player 1</span>
+      </div>
+      <div class="score-box" id="scoreBox">
+        <span class="score" id="score1">0</span>
+        <span class="dash">-</span>
+        <span class="score" id="score2">0</span>
       </div>
       <div class="player" id="rightPlayer">
         <span id="player2">Player 2</span>
-        <img src="" alt="Right Flag" id="rightFlag">
+        <img id="rightFlag" src="" alt="flag2">
       </div>
     </div>
-    <div id="score">0 - 0</div>
-    <div id="race">Race to 0</div>
-    <div id="table">Table</div>
+    <div class="decor-line"></div>
+    <div id="raceToText">Race to 0</div>
   </div>
+
+  <div id="tableText">Table</div>
 
   <script>
     async function updateOverlay() {
@@ -83,24 +144,30 @@
         const res = await fetch("https://epbf-overlay-backend-production.up.railway.app/score");
         const data = await res.json();
 
-        if (data.error) {
-          document.getElementById('content').classList.add('hidden');
-          return;
-        }
-
         document.getElementById('player1').innerText = data.player1;
         document.getElementById('player2').innerText = data.player2;
-        document.getElementById('score').innerText = `${data.score1} - ${data.score2}`;
-        document.getElementById('race').innerText = `Race to ${data.raceTo}`;
-        document.getElementById('table').innerText = `Table ${data.table}`;
+        document.getElementById('score1').innerText = data.score1;
+        document.getElementById('score2').innerText = data.score2;
+        document.getElementById('leftFlag').src = data.flag1;
+        document.getElementById('rightFlag').src = data.flag2;
+        document.getElementById('raceToText').innerText = `Race to ${data.raceTo}`;
+        document.getElementById('tableText').innerText = `Table ${data.table}`;
 
-        document.getElementById('leftFlag').src = `https://www.epbf.com/media/flags/${data.flag1}.png`;
-        document.getElementById('rightFlag').src = `https://www.epbf.com/media/flags/${data.flag2}.png`;
+        const scoreBox = document.getElementById('scoreBox');
+        const s1 = parseInt(data.score1);
+        const s2 = parseInt(data.score2);
+        const race = parseInt(data.raceTo);
 
-        document.getElementById('content').classList.remove('hidden');
+        if (!isNaN(s1) && !isNaN(s2) && !isNaN(race)) {
+          if (s1 === race - 1 && s2 === race - 1) {
+            scoreBox.classList.add('decisive');
+          } else {
+            scoreBox.classList.remove('decisive');
+          }
+        }
+
       } catch (e) {
-        console.error('Error fetching score:', e);
-        document.getElementById('content').classList.add('hidden');
+        console.error("Failed to update overlay", e);
       }
     }
 
