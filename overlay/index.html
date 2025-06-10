@@ -333,25 +333,22 @@
 
         if (data.playerHistory && data.playerHistory.length > 0) {
           historyTitleEl.innerText = "Last matches:";
-          historyListEl.innerHTML = ''; // Clear previous entries
-          data.playerHistory.forEach(matchStr => {
-            const matchDiv = document.createElement('div');
-            const colonIdx = matchStr.indexOf(':');
-            if (colonIdx !== -1) {
-              const round = matchStr.slice(0, colonIdx).trim();
-              const text = matchStr.slice(colonIdx + 1).trim();
-              matchDiv.innerHTML = `<strong>${round}</strong>: ${text}`;
-            } else {
-              matchDiv.innerText = matchStr;
-            }
+          historyListEl.innerHTML = '';
 
-            historyListEl.appendChild(matchDiv);
+          data.playerHistory.forEach(matchStr => {
+            const div = document.createElement('div');
+            div.style.whiteSpace = 'nowrap';
+            div.style.display = 'inline-block';
+            div.style.fontWeight = 'normal';
+            div.innerHTML = applyBoldToWinner(matchStr);
+            historyListEl.appendChild(div);
           });
+
           historyContainer.style.display = 'block';
         } else {
           historyContainer.style.display = 'none';
-          historyTitleEl.innerText = ""; // Clear title if no history
-          historyListEl.innerHTML = ''; // Clear list if no history
+          historyTitleEl.innerText = "";
+          historyListEl.innerHTML = '';
         }
         previousScore1 = newScore1;
         previousScore2 = newScore2;
@@ -364,9 +361,26 @@
       }
     }
 
+        function applyBoldToWinner(text) {
+      const match = text.match(/^(.+?) (\d+) - (\d+) (.+)$/);
+      if (!match) return text;
+
+      const p1 = match[1];
+      const s1 = parseInt(match[2]);
+      const s2 = parseInt(match[3]);
+      const p2 = match[4];
+
+      if (s1 > s2) {
+        return `<b>${p1} ${s1}</b> - ${s2} ${p2}`;
+      } else if (s2 > s1) {
+        return `${p1} ${s1} - <b>${s2} ${p2}</b>`;
+      }
+      return text;
+    }
+
     updateOverlay();
     setInterval(updateOverlay, 5000);
   </script>
 </body>
 </html>
-    
+      

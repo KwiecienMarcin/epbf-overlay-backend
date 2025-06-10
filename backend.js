@@ -148,7 +148,6 @@ app.get('/score', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch or parse data' });
   }
 });
-
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
