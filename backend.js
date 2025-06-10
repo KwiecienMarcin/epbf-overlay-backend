@@ -108,35 +108,32 @@ app.get('/score', async (req, res) => {
         }
 
         if (p1Name && p2Name && p1Score !== '' && p2Score !== '') {
-          // Pomijaj walkovery
-          if (
-            p1Name.toLowerCase().includes('walkover') ||
-            p2Name.toLowerCase().includes('walkover')
-          ) return;
+  // Pomijaj walkovery
+  if (
+    p1Name.toLowerCase().includes('walkover') ||
+    p2Name.toLowerCase().includes('walkover')
+  ) return;
 
-          const p1NameParts = p1Name.split(' ').filter(p => /^[A-ZĄĆĘŁŃÓŚŹŻ-]+$/.test(p));
-          const p2NameParts = p2Name.split(' ').filter(p => /^[A-ZĄĆĘŁŃÓŚŹŻ-]+$/.test(p));
-          const p1Surname = p1NameParts.join(' ');
-          const p2Surname = p2NameParts.join(' ');
+  const p1NameParts = p1Name.split(' ').filter(p => /^[A-ZĄĆĘŁŃÓŚŹŻ-]+$/.test(p));
+  const p2NameParts = p2Name.split(' ').filter(p => /^[A-ZĄĆĘŁŃÓŚŹŻ-]+$/.test(p));
+  const p1Surname = p1NameParts.join(' ');
+  const p2Surname = p2NameParts.join(' ');
 
-          const p1ScoreNum = parseInt(p1Score);
-          const p2ScoreNum = parseInt(p2Score);
+  const p1ScoreNum = parseInt(p1Score);
+  const p2ScoreNum = parseInt(p2Score);
 
-          let formatted = '';
-          if (p1Link && p1ScoreNum > p2ScoreNum) {
-            formatted = `<b>${p1Surname} ${p1Score}</b> - ${p2Score} ${p2Surname}`;
-          } else if (p1Link) {
-            formatted = `${p1Surname} ${p1Score} - <b>${p2Score} ${p2Surname}</b>`;
-          } else if (p2Link && p2ScoreNum > p1ScoreNum) {
-            formatted = `<b>${p2Surname} ${p2Score}</b> - ${p1Score} ${p1Surname}`;
-          } else if (p2Link) {
-            formatted = `${p2Surname} ${p2Score} - <b>${p1Score} ${p1Surname}</b>`;
-          }
+  let formatted = '';
+  if (p1Link) {
+    formatted = `${p1Surname} ${p1Score} - ${p2Score} ${p2Surname}`;
+  } else if (p2Link) {
+    formatted = `${p2Surname} ${p2Score} - ${p1Score} ${p1Surname}`;
+  }
 
-          if (formatted) {
-            playerHistory.push(`${formatted}`);
-          }
-        }
+  if (formatted) {
+    playerHistory.push(formatted);
+  }
+}
+
       }
     });
 
