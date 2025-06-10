@@ -23,39 +23,11 @@ function getFullFlagUrl(src) {
   return `https://www.epbf.com${src.replace('..', '')}`;
 }
 
-function abbreviateSectionTitle(title) {
-  if (!title) return '';
-  const seMap = {
-    "SE - Last 32": "L32",
-    "SE - Last 16": "L16",
-    "SE - Quarter Finals": "QF",
-    "SE - Semi Finals": "SF",
-    "SE - Final": "F"
-  };
-
-  if (seMap[title]) {
-    return seMap[title];
-  }
-
-  let processedTitle = title;
-  if (title.startsWith('SE - ')) {
-    processedTitle = title.substring(5).trim();
-  }
-
-  processedTitle = processedTitle.replace(/\(.*?\)/g, '').trim();
-
-  const words = processedTitle.split(/\s+/);
-  let abbreviation = '';
-  let collectedNumbers = '';
-  words.forEach(word => {
-    if (!word) return;
-    if (/^[a-zA-Z]+(-[a-zA-Z]+)*$/.test(word)) {
-      abbreviation += word.charAt(0).toUpperCase();
-    } else if (/^\d+(\/\d+)?$/.test(word)) {
-      collectedNumbers += word;
-    }
-  });
-  return abbreviation + collectedNumbers;
+function filterUppercaseWords(text) {
+  return text
+    .split(' ')
+    .filter(word => word === word.toUpperCase())
+    .join(' ');
 }
 
 app.get('/score', async (req, res) => {
@@ -74,7 +46,6 @@ app.get('/score', async (req, res) => {
       const roundNameCell = $(el).children('td.roundname[colspan="12"]');
       if (roundNameCell.length > 0) {
         const sectionTitle = roundNameCell.text().trim();
-        currentSectionAbbreviation = abbreviateSectionTitle(sectionTitle);
         return;
       }
 
@@ -116,15 +87,28 @@ app.get('/score', async (req, res) => {
 
         let historyEntry = null;
         if (p1Name && p2Name && p1Score !== '' && p2Score !== '') {
-          if (p1Link && p2Name.toLowerCase() !== 'walkover') {
-            historyEntry = `${p1Name} ${p1Score} - ${p2Score} ${p2Name}`;
-          } else if (p2Link && p1Name.toLowerCase() !== 'walkover') {
-            historyEntry = `${p2Name} ${p2Score} - ${p1Score} ${p1Name}`;
+          const p1Clean = filterUppercaseWords(p1Name);
+          const p2Clean = filterUppercaseWords(p2Name);
+          const score1 = parseInt(p1Score, 10);
+          const score2 = parseInt(p2Score, 10);
+
+          if (p1Link && p2Clean.toLowerCase() !== 'walkover') {
+            if (score1 > score2) {
+              historyEntry = `**${p1Clean} ${p1Score}** - ${p2Score} ${p2Clean}`;
+            } else {
+              historyEntry = `${p1Clean} ${p1Score} - **${p2Score} ${p2Clean}**`;
+            }
+          } else if (p2Link && p1Clean.toLowerCase() !== 'walkover') {
+            if (score2 > score1) {
+              historyEntry = `**${p2Clean} ${p2Score}** - ${p1Score} ${p1Clean}`;
+            } else {
+              historyEntry = `${p2Clean} ${p2Score} - **${p1Score} ${p1Clean}**`;
+            }
           }
         }
 
         if (historyEntry) {
-          playerHistory.push(`${currentSectionAbbreviation}: ${historyEntry}`);
+          playerHistory.push(historyEntry);
         }
       }
     });
