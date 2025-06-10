@@ -8,8 +8,8 @@ app.use(cors());
 
 const PORT = process.env.PORT || 3000;
 const EPBF_URL = 'https://www.epbf.com/tournaments/eurotour/id/1334/draw-results/';
-const MATCH_ID = 'C033';
-const PLAYER_ID = '14045';
+const MATCH_ID = 'SE20';
+const PLAYER_ID = '3355';
 
 function cleanPlayerName(cell) {
   const fullText = cell.text().trim().split('\n').map(s => s.trim()).filter(Boolean);
@@ -34,6 +34,39 @@ app.get('/score', async (req, res) => {
   try {
     const response = await axios.get(EPBF_URL);
     const $ = cheerio.load(response.data);
+
+  const allMatches = [];
+  let currentRound = '';
+
+  $("tbody").each((ti, tbody) => {
+    const roundHeader = $(tbody).find("h3.h3").text().trim();
+    if (roundHeader) currentRound = roundHeader;
+
+    $(tbody).find("tr.full_layout").each((ri, row) => {
+      const tds = $(row).find("td");
+      if (tds.length < 12) return;
+
+      const matchId = $(row).attr("id");
+      const timeText = $(tds[1]).text().trim().replace(/\s+/g, ' ');
+      const p1 = cleanPlayerName($(tds[4]));
+      const p2 = cleanPlayerName($(tds[9])) || cleanPlayerName($(tds[10]));
+      const score1 = $(tds[6]).text().trim();
+      const score2 = $(tds[8]).text().trim();
+
+      if (score1 && score2) {
+        allMatches.push({
+          matchId,
+          time: timeText,
+          round: currentRound,
+          player1: p1,
+          player2: p2,
+          score1,
+          score2
+        });
+      }
+    });
+  });
+
 
     let currentMatchData = {};
     let matchFound = false;
