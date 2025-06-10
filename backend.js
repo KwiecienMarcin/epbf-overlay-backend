@@ -7,8 +7,8 @@ const app = express();
 app.use(cors());
 
 const PORT = process.env.PORT || 3000;
-const EPBF_URL = 'https://www.epbf.com/tournaments/european-championships/live/1320/draw-results/';
-const MATCH_ID = 'A094';
+const EPBF_URL = 'https://www.epbf.com/tournaments/eurotour/id/1334/draw-results/';
+const MATCH_ID = 'C002';
 
 function cleanPlayerName(cell) {
   const fullText = cell.text().trim().split('\n').map(s => s.trim()).filter(Boolean);
