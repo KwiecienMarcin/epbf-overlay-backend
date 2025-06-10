@@ -52,10 +52,11 @@ app.get('/score', async (req, res) => {
           const p1Href = p1Cell.find('a').attr('href') || '';
           const p2Href = p2Cell.find('a').attr('href') || '';
 
-          const p1Id = p1Href.match(/\/player\/show\/(\d+)\//)?.[1];
-          const p2Id = p2Href.match(/\/player\/show\/(\d+)\//)?.[1];
+          const p1Id = p1Href.match(/player\/show\/(\d+)\//)?.[1];
+          const p2Id = p2Href.match(/player\/show\/(\d+)\//)?.[1];
 
           if (p1Id !== PLAYER_ID && p2Id !== PLAYER_ID) return;
+
 
           const player1 = cleanPlayerName(p1Cell);
           const player2 = cleanPlayerName(p2Cell);
