@@ -1,3 +1,4 @@
+
 const express = require('express');
 const axios = require('axios');
 const cheerio = require('cheerio');
@@ -19,8 +20,8 @@ function cleanPlayerName(cell) {
 
 function getFullFlagUrl(src) {
   if (!src) return '';
-  if (src.startsWith('http')) return src; // already full
-    return `https://www.epbf.com${src.replace('..', '')}`;
+  if (src.startsWith('http')) return src;
+  return `https://www.epbf.com${src.replace('..', '')}`;
 }
 
 function abbreviateSectionTitle(title) {
@@ -42,11 +43,16 @@ function abbreviateSectionTitle(title) {
     "SE - Final": "F"
   };
 
-  return roundMap[title.trim()] || ''; // Zwróć pusty string jeśli nie pasuje
+  const trimmed = title.trim();
+  if (roundMap[trimmed]) {
+    return roundMap[trimmed];
+  } else {
+    console.log("UNKNOWN ROUND TITLE:", trimmed);
+    return `[UNKNOWN: ${trimmed}]`;
+  }
 }
 
 app.get('/score', async (req, res) => {
-  //const { playerId } = req.query; // Expecting ?playerId=XXXX
   try {
     const response = await axios.get(EPBF_URL);
     const $ = cheerio.load(response.data);
@@ -54,28 +60,22 @@ app.get('/score', async (req, res) => {
     let currentMatchData = {};
     let matchFound = false;
     const playerHistory = [];
-    let currentSectionAbbreviation = ''; // To store the abbreviation of the current round
-
+    let currentSectionAbbreviation = '';
 
     $('table tr').each((i, el) => {
       const tds = $(el).find('td');
-      // Check for section header row FIRST (e.g., "Winners Round 1")
-      // These typically have a single td with class "roundname" and colspan="12"
       const roundNameCell = $(el).children('td.roundname[colspan="12"]');
       if (roundNameCell.length > 0) {
         const sectionTitle = roundNameCell.text().trim();
         currentSectionAbbreviation = abbreviateSectionTitle(sectionTitle);
-                // console.log(`Found round header: '${sectionTitle}', Abbreviation: '${currentSectionAbbreviation}'`); // Optional: for debugging
-
-        return; // This row is a header, skip further match processing for this row
+        console.log("FOUND ROUND TITLE:", sectionTitle, "=>", currentSectionAbbreviation);
+        return;
       }
 
-      // Ensure row has enough cells for parsing a match row
       if (tds.length < 12) return;
-      const rowMatchId = $(tds[0]).text().trim(); // Get match ID from the first cell of the row
+      const rowMatchId = $(tds[0]).text().trim();
 
-      // 1. Current match data (based on hardcoded MATCH_ID)
-      if (!matchFound) { // Only process if current match not yet found
+      if (!matchFound) {
         const rowText = $(el).text();
         if (rowText.includes(MATCH_ID)) {
           currentMatchData = {
@@ -95,41 +95,37 @@ app.get('/score', async (req, res) => {
         }
       }
 
-// 2. Player history (using global PLAYER_ID)
-      if (PLAYER_ID && rowMatchId !== MATCH_ID) { // Exclude the current live match from history
+      if (PLAYER_ID && rowMatchId !== MATCH_ID) {
         const p1Cell = $(tds[4]);
-        const p2CellForNameLogic1 = $(tds[9]); // Primary cell for player 2 name/link
-        const p2CellForNameLogic2 = $(tds[10]); // Alternative cell for player 2 name/link
+        const p2Cell1 = $(tds[9]);
+        const p2Cell2 = $(tds[10]);
 
         const p1Name = cleanPlayerName(p1Cell);
         const p1Score = $(tds[6]).text().trim();
         const p2Score = $(tds[8]).text().trim();
-        const p2Name = cleanPlayerName(p2CellForNameLogic1) || cleanPlayerName(p2CellForNameLogic2);
+        const p2Name = cleanPlayerName(p2Cell1) || cleanPlayerName(p2Cell2);
 
-        // Check if the current row is for the tracked player
-const p1LinkFound = p1Cell.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0;
-        const p2LinkFound = p2CellForNameLogic1.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0 ||
-                            p2CellForNameLogic2.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0;
-        
+        const p1Link = p1Cell.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0;
+        const p2Link = p2Cell1.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0 ||
+                       p2Cell2.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0;
+
         let historyEntry = null;
-        if (p1Name && p2Name && p1Score !== '' && p2Score !== '') { // Basic check for valid data
-            if (p1LinkFound && p2Name.toLowerCase() !== 'walkover') {
-                historyEntry = `${p1Name} ${p1Score} - ${p2Score} ${p2Name}`;
-            } else if (p2LinkFound && p1Name.toLowerCase() !== 'walkover') {
-                historyEntry = `${p2Name} ${p2Score} - ${p1Score} ${p1Name}`;
-            }
+        if (p1Name && p2Name && p1Score !== '' && p2Score !== '') {
+          if (p1Link && p2Name.toLowerCase() !== 'walkover') {
+            historyEntry = `${p1Name} ${p1Score} - ${p2Score} ${p2Name}`;
+          } else if (p2Link && p1Name.toLowerCase() !== 'walkover') {
+            historyEntry = `${p2Name} ${p2Score} - ${p1Score} ${p1Name}`;
+          }
         }
-        
+
         if (historyEntry) {
-            playerHistory.push(`${currentSectionAbbreviation}: ${historyEntry}`); // Always include abbreviation and colon
+          playerHistory.push(`${currentSectionAbbreviation}: ${historyEntry}`);
         }
       }
     });
 
-if (matchFound) {
-      const responsePayload = { ...currentMatchData };
-      responsePayload.playerHistory = playerHistory; // Add history (will be empty if no matches or PLAYER_ID not set)
-
+    if (matchFound) {
+      const responsePayload = { ...currentMatchData, playerHistory };
       res.json(responsePayload);
     } else {
       res.status(404).json({ error: 'Match not found' });
