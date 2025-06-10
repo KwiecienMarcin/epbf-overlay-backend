@@ -24,9 +24,17 @@ function getFullFlagUrl(src) {
 }
 
 function abbreviateSectionTitle(title) {
-  if (!title) return '';
- // Specific mappings for "SE - " titles based on user's desired output (often from parentheses)
-  const seMap = {
+  const roundMap = {
+    "Round 1": "R1",
+    "Winners Round 1": "WR1",
+    "Winners Round 2": "WR2",
+    "Winners Qualification": "WQ",
+    "Losers Round 1": "LR1",
+    "Losers Round 2": "LR2",
+    "Losers Round 3": "LR3",
+    "Losers Round 4": "LR4",
+    "Losers Round 5": "LR5",
+    "Losers Qualification": "LQ",
     "SE - Last 32": "L32",
     "SE - Last 16": "L16",
     "SE - Quarter Finals": "QF",
@@ -34,36 +42,7 @@ function abbreviateSectionTitle(title) {
     "SE - Final": "F"
   };
 
-  if (seMap[title]) {
-    return seMap[title];
-  }
-
-  let processedTitle = title;
-  // If it's an SE title not caught by the map, strip "SE - " for general processing
-  if (title.startsWith('SE - ')) {
-    processedTitle = title.substring(5).trim();
-  }
-
-  // Remove any other content within parentheses for general processing
-  processedTitle = processedTitle.replace(/\(.*?\)/g, '').trim();
-
-  const words = processedTitle.split(/\s+/);
-  let abbreviation = '';
-  let collectedNumbers = '';
-  words.forEach(word => {
-    if (!word) return; // Skip empty words if any
-
-    // Check if the word is purely alphabetic (allows hyphens like in "Semi-Finals")
-    if (/^[a-zA-Z]+(-[a-zA-Z]+)*$/.test(word)) {
-
-      abbreviation += word.charAt(0).toUpperCase();
-    } 
-    // Check if the word is purely numeric or a fraction
-    else if (/^\d+(\/\d+)?$/.test(word)) {
-      collectedNumbers += word;
-    }
-  });
-  return abbreviation + collectedNumbers;
+  return roundMap[title.trim()] || ''; // Zwróć pusty string jeśli nie pasuje
 }
 
 app.get('/score', async (req, res) => {
