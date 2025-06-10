@@ -66,20 +66,24 @@ app.get('/score', async (req, res) => {
     let currentMatchData = {};
     let matchFound = false;
     const playerHistory = [];
+    let currentSectionAbbreviation = '';
 
-    $('h3.h3').each((i, el) => {
-      const sectionTitle = $(el).text().trim();
-      const currentSectionAbbreviation = abbreviateSectionTitle(sectionTitle);
+    $('table tr').each((i, el) => {
+      const tds = $(el).find('td');
 
-      const table = $(el).next('table');
-      table.find('tr').each((_, row) => {
-        const tds = $(row).find('td');
-        if (tds.length < 12) return;
+      const roundNameCell = $(el).children('td.roundname[colspan="12"]');
+      if (roundNameCell.length > 0) {
+        const sectionTitle = roundNameCell.text().trim();
+        currentSectionAbbreviation = abbreviateSectionTitle(sectionTitle);
+        return;
+      }
 
-        const rowMatchId = $(tds[0]).text().trim();
+      if (tds.length < 12) return;
+      const rowMatchId = $(tds[0]).text().trim();
 
-        // 1. Live match
-        if (!matchFound && rowMatchId === MATCH_ID) {
+      if (!matchFound) {
+        const rowText = $(el).text();
+        if (rowText.includes(MATCH_ID)) {
           currentMatchData = {
             matchId: MATCH_ID,
             raceTo: $(tds[3]).text().trim(),
@@ -95,39 +99,39 @@ app.get('/score', async (req, res) => {
           };
           matchFound = true;
         }
+      }
 
-        // 2. Player history
-        if (PLAYER_ID && rowMatchId !== MATCH_ID) {
-          const p1Cell = $(tds[4]);
-          const p2Cell1 = $(tds[9]);
-          const p2Cell2 = $(tds[10]);
+      if (PLAYER_ID && rowMatchId !== MATCH_ID) {
+        const p1Cell = $(tds[4]);
+        const p2Cell1 = $(tds[9]);
+        const p2Cell2 = $(tds[10]);
 
-          const p1Name = cleanPlayerName(p1Cell);
-          const p2Name = cleanPlayerName(p2Cell1) || cleanPlayerName(p2Cell2);
-          const p1Score = $(tds[6]).text().trim();
-          const p2Score = $(tds[8]).text().trim();
+        const p1Name = cleanPlayerName(p1Cell);
+        const p2Name = cleanPlayerName(p2Cell1) || cleanPlayerName(p2Cell2);
+        const p1Score = $(tds[6]).text().trim();
+        const p2Score = $(tds[8]).text().trim();
 
-          const p1Link = p1Cell.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0;
-          const p2Link = p2Cell1.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0 || p2Cell2.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0;
+        const p1Link = p1Cell.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0;
+        const p2Link = p2Cell1.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0 || p2Cell2.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0;
 
-          let historyEntry = null;
-          if (p1Name && p2Name && p1Score !== '' && p2Score !== '') {
-            if (p1Link && p2Name.toLowerCase() !== 'walkover') {
-              historyEntry = `${p1Name} ${p1Score} - ${p2Score} ${p2Name}`;
-            } else if (p2Link && p1Name.toLowerCase() !== 'walkover') {
-              historyEntry = `${p2Name} ${p2Score} - ${p1Score} ${p1Name}`;
-            }
-          }
-
-          if (historyEntry) {
-            playerHistory.push(`${currentSectionAbbreviation}: ${historyEntry}`);
+        let historyEntry = null;
+        if (p1Name && p2Name && p1Score !== '' && p2Score !== '') {
+          if (p1Link && p2Name.toLowerCase() !== 'walkover') {
+            historyEntry = `${p1Name} ${p1Score} - ${p2Score} ${p2Name}`;
+          } else if (p2Link && p1Name.toLowerCase() !== 'walkover') {
+            historyEntry = `${p2Name} ${p2Score} - ${p1Score} ${p1Name}`;
           }
         }
-      });
+
+        if (historyEntry) {
+          playerHistory.push(`${currentSectionAbbreviation}: ${historyEntry}`);
+        }
+      }
     });
 
     if (matchFound) {
-      res.json({ ...currentMatchData, playerHistory });
+      const responsePayload = { ...currentMatchData, playerHistory };
+      res.json(responsePayload);
     } else {
       res.status(404).json({ error: 'Match not found' });
     }
@@ -136,7 +140,6 @@ app.get('/score', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch or parse data' });
   }
 });
-
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
