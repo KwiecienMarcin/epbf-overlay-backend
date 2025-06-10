@@ -8,8 +8,8 @@ app.use(cors());
 
 const PORT = process.env.PORT || 3000;
 const EPBF_URL = 'https://www.epbf.com/tournaments/eurotour/id/1334/draw-results/';
-const MATCH_ID = 'C033';
-const PLAYER_ID = '14045'; // Hardcoded Player ID
+const MATCH_ID = 'SE20';
+const PLAYER_ID = '3355'; // Hardcoded Player ID
 
 function cleanPlayerName(cell) {
   const fullText = cell.text().trim().split('\n').map(s => s.trim()).filter(Boolean);
@@ -23,6 +23,23 @@ function getFullFlagUrl(src) {
     return `https://www.epbf.com${src.replace('..', '')}`;
 }
 
+function abbreviateSectionTitle(title) {
+  if (!title) return '';
+  const words = title.trim().split(/\s+/);
+  let abbreviation = '';
+  let numbers = '';
+  words.forEach(word => {
+    // Regex to match numbers like "1", "32", or fractions like "1/32"
+    if (/^\d+(\/\d+)?$/.test(word)) {
+      numbers += word;
+    } else if (word.length > 0 && isNaN(parseInt(word.charAt(0)))) {
+      // Take the first character if it's a word (not starting with a number unless it's a pure number handled above)
+      abbreviation += word.charAt(0).toUpperCase();
+    }
+  });
+  return abbreviation + numbers;
+}
+
 app.get('/score', async (req, res) => {
   //const { playerId } = req.query; // Expecting ?playerId=XXXX
   try {
@@ -32,6 +49,8 @@ app.get('/score', async (req, res) => {
     let currentMatchData = {};
     let matchFound = false;
     const playerHistory = [];
+    let currentSectionAbbreviation = ''; // To store the abbreviation of the current round
+
 
     $('table tr').each((i, el) => {
       const tds = $(el).find('td');
@@ -39,6 +58,14 @@ app.get('/score', async (req, res) => {
       if (tds.length < 12) return;
       const rowMatchId = $(tds[0]).text().trim(); // Get match ID from the first cell of the row
 
+            // Check for section header row (e.g., "Winners Round 1")
+      // These typically have a single td with class "roundname" and colspan="12"
+      const roundNameCell = $(el).children('td.roundname[colspan="12"]');
+      if (roundNameCell.length > 0) {
+        const sectionTitle = roundNameCell.text().trim();
+        currentSectionAbbreviation = abbreviateSectionTitle(sectionTitle);
+        return; // This row is a header, skip further match processing for this row
+      }
 
       // 1. Current match data (based on hardcoded MATCH_ID)
       if (!matchFound) { // Only process if current match not yet found
@@ -87,7 +114,7 @@ const p1LinkFound = p1Cell.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length 
         }
         
         if (historyEntry) {
-            playerHistory.push(historyEntry);
+            playerHistory.push(`${currentSectionAbbreviation}: ${historyEntry}`);
         }
       }
     });
