@@ -13,8 +13,7 @@ const PLAYER_ID = '3355';
 
 function cleanPlayerName(cell) {
   const fullText = cell.text().trim().split('\n').map(s => s.trim()).filter(Boolean);
-  const longName = fullText.find(name => name.includes(' '));
-  return longName || fullText[0] || '';
+  return fullText.find(name => name.includes(' ')) || fullText[0] || '';
 }
 
 function getFullFlagUrl(src) {
@@ -41,7 +40,7 @@ function abbreviateSectionTitle(title) {
     "SE - Semi Finals": "SF",
     "SE - Final": "F"
   };
-  return roundMap[title.trim()] || '';
+  return roundMap[title.trim()] || title.trim();
 }
 
 app.get('/score', async (req, res) => {
@@ -49,24 +48,22 @@ app.get('/score', async (req, res) => {
     const response = await axios.get(EPBF_URL);
     const $ = cheerio.load(response.data);
 
+    const playerHistory = [];
     let currentMatchData = {};
     let matchFound = false;
-    const playerHistory = [];
 
-    $('h3.h3').each((_, h3) => {
-      const roundTitle = $(h3).text().trim();
+    $('h3.h3').each((_, h3Elem) => {
+      const roundTitle = $(h3Elem).text().trim();
       const roundAbbreviation = abbreviateSectionTitle(roundTitle);
-      const section = $(h3).nextAll('table').first();
+      const table = $(h3Elem).next('table');
 
-      section.find('tr').each((_, row) => {
-        const tds = $(row).find('td');
+      table.find('tr').each((_, el) => {
+        const tds = $(el).find('td');
         if (tds.length < 12) return;
-
         const rowMatchId = $(tds[0]).text().trim();
-        const rowText = $(row).text();
 
-        // Obecny mecz
-        if (!matchFound && rowText.includes(MATCH_ID)) {
+        // Znalezienie bieżącego meczu
+        if (!matchFound && $(el).text().includes(MATCH_ID)) {
           currentMatchData = {
             matchId: MATCH_ID,
             raceTo: $(tds[3]).text().trim(),
@@ -74,38 +71,38 @@ app.get('/score', async (req, res) => {
             flag1: getFullFlagUrl($(tds[5]).find('img').attr('src')),
             score1: $(tds[6]).text().trim(),
             score2: $(tds[8]).text().trim(),
-            flag2: getFullFlagUrl($(tds[8]).find('img').attr('src')) ||
-                   getFullFlagUrl($(tds[9]).find('img').attr('src')) ||
-                   getFullFlagUrl($(tds[10]).find('img').attr('src')),
+            flag2: getFullFlagUrl($(tds[8]).find('img').attr('src'))
+              || getFullFlagUrl($(tds[9]).find('img').attr('src'))
+              || getFullFlagUrl($(tds[10]).find('img').attr('src')),
             player2: cleanPlayerName($(tds[9])) || cleanPlayerName($(tds[10])),
             table: $(tds[11]).text().trim()
           };
           matchFound = true;
         }
 
-        // Historia zawodnika
-        const p1Cell = $(tds[4]);
-        const p2Cell = $(tds[9]);
-        const altP2Cell = $(tds[10]);
+        // Historia gracza
+        if (PLAYER_ID && rowMatchId !== MATCH_ID) {
+          const p1Cell = $(tds[4]);
+          const p2Cell1 = $(tds[9]);
+          const p2Cell2 = $(tds[10]);
 
-        const p1Name = cleanPlayerName(p1Cell);
-        const p2Name = cleanPlayerName(p2Cell) || cleanPlayerName(altP2Cell);
-        const p1Score = $(tds[6]).text().trim();
-        const p2Score = $(tds[8]).text().trim();
+          const p1Name = cleanPlayerName(p1Cell);
+          const p1Score = $(tds[6]).text().trim();
+          const p2Score = $(tds[8]).text().trim();
+          const p2Name = cleanPlayerName(p2Cell1) || cleanPlayerName(p2Cell2);
 
-        const p1LinkFound = p1Cell.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0;
-        const p2LinkFound = p2Cell.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0 ||
-                            altP2Cell.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0;
+          const p1Link = p1Cell.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0;
+          const p2Link = p2Cell1.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0 ||
+                         p2Cell2.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0;
 
-        if (p1Name && p2Name && p1Score !== '' && p2Score !== '') {
-          let historyEntry = null;
-          if (p1LinkFound && p2Name.toLowerCase() !== 'walkover') {
-            historyEntry = `${p1Name} ${p1Score} - ${p2Score} ${p2Name}`;
-          } else if (p2LinkFound && p1Name.toLowerCase() !== 'walkover') {
-            historyEntry = `${p2Name} ${p2Score} - ${p1Score} ${p1Name}`;
-          }
-          if (historyEntry) {
-            playerHistory.push(`${roundAbbreviation}: ${historyEntry}`);
+          if (p1Name && p2Name && p1Score !== '' && p2Score !== '') {
+            let entry = null;
+            if (p1Link && p2Name.toLowerCase() !== 'walkover') {
+              entry = `${p1Name} ${p1Score} - ${p2Score} ${p2Name}`;
+            } else if (p2Link && p1Name.toLowerCase() !== 'walkover') {
+              entry = `${p2Name} ${p2Score} - ${p1Score} ${p1Name}`;
+            }
+            if (entry) playerHistory.push(`${roundAbbreviation}: ${entry}`);
           }
         }
       });
@@ -117,8 +114,8 @@ app.get('/score', async (req, res) => {
       res.status(404).json({ error: 'Match not found' });
     }
   } catch (err) {
-    console.error('Error in /score endpoint:', err.message);
-    res.status(500).json({ error: 'Failed to fetch or parse data', details: err.message });
+    console.error('Error:', err);
+    res.status(500).json({ error: 'Failed to fetch data' });
   }
 });
 
