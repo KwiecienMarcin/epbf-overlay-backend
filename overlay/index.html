@@ -3,116 +3,143 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    html, body {
-      width: 1920px;
-      height: 1080px;
-    }
-    body {
-      margin: 0;
-      background: transparent;
-      overflow: hidden;
-      font-family: 'Rajdhani', sans-serif;
-    }
-    @keyframes pulseRed {
-      0%, 100% { background: #a60000; }
-      50% { background: #ff0000; }
-    }
-    #overlay-bar {
-      position: fixed;
-      bottom: 0;
-      width: 1100px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: linear-gradient(to right, rgba(0, 47, 108, 0) 0%, #002f6c 15%, #002f6c 85%, rgba(0, 47, 108, 0) 100%);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 1px 8px;
-      color: white;
-      flex-direction: column;
-    }
-    .player-line {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 100%;
-      gap: 4px;
-    }
-    .player {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 14px;
-    }
-    .player span {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .player img {
-      width: 20px;
-      height: 14px;
-      object-fit: contain;
-    }
-    .score-box {
-      display: flex;
-      gap: 6px;
-      font-size: 20px;
-      font-weight: bold;
-      z-index: 2;
-      justify-content: center;
-    }
-    .score-box .score {
-      background: #003f8c;
-      padding: 2px 8px;
-      border-radius: 4px;
-      transition: background 0.3s;
-    }
-    .score-box.decisive .score {
-      animation: pulseRed 1s infinite;
-    }
-    .decor-line {
-      width: 100%;
-      height: 2px;
-      background: linear-gradient(to right, transparent 0%, white 50%, transparent 100%);
-      margin: 1px 0;
-    }
-    #raceToText {
-      font-size: 12px;
-      margin-top: 1px;
-    }
-    .corner-logo {
-      position: fixed;
-      z-index: 3;
-    }
-    #logoLeft {
-      top: 20px;
-      left: 60px;
-      height: 160px;
-      width: auto;
-    }
-    #logoRight {
-      top: 20px;
-      right: 30px;
-      width: 150px;
-      height: 150px;
-    }
-    #tableText {
-      font-size: 20px;
-      font-weight: bold;
-      text-align: center;
-      position: fixed;
-      top: 190px;
-      left: 60px;
-      color: white;
-      text-shadow: 1px 1px 4px black;
-    }
-  </style>
+  html, body {
+    width: 1920px;
+    height: 1080px;
+  }
+  body {
+    margin: 0;
+    background: transparent;
+    overflow: hidden;
+    font-weight: 400; /* Ustawienie domyślnej grubości dla body */
+    font-family: 'Rajdhani', sans-serif;
+  }
+  @keyframes pulseRed {
+    0%, 100% { background: #a60000; }
+    50% { background: #ff0000; }
+  }
+  #overlay-bar {
+    position: fixed;
+    bottom: 0;
+    width: 770px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(to right, rgba(188, 33, 48, 0) 0%, #bc2130 15%, #bc2130 85%, rgba(188, 33, 48, 0) 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1.2px 9.6px;
+    color: white;
+    flex-direction: column;
+  }
+  .player-line {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    gap: 30px;
+  }
+  .player {
+  display: flex;
+  align-items: center;
+  gap: 14.4px; /* Zwiększona przerwa od cyfr */
+  font-size: 20px; /* Większa czcionka */
+}
+
+.player span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+    /* Imię będzie miało domyślną grubość (400 od body) */
+}
+
+.player span strong {
+  font-weight: 700; /* Nazwisko (wewnątrz strong) będzie miało grubość 700 */
+}
+
+.player img {
+  width: 28px; /* Większa flaga */
+  height: 20px;
+  object-fit: contain;
+}
+  .score-box {
+    display: flex;
+    gap: 7.2px;
+    font-size: 24px;
+    font-weight: bold;
+    z-index: 2;
+    justify-content: center;
+  }
+  .score-box .score {
+    background: #99000f;
+    padding: 2.4px 9.6px;
+    border-radius: 4.8px;
+    transition: background 0.3s;
+  }
+  .score-box.decisive .score {
+    animation: pulseRed 1s infinite;
+  }
+  .decor-line {
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(to right, transparent 0%, white 50%, transparent 100%);
+    margin: 1.2px 0;
+  }
+  #raceToText {
+    font-size: 14.4px;
+    margin-top: 1.2px;
+  }
+  .corner-logo {
+    position: fixed;
+    z-index: 3;
+  }
+ /* Nowy kontener dla lewego logo i tekstu stołu */
+  #logoLeftArea {
+    top: 20px;
+    left: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Wyśrodkowuje elementy wewnątrz (logo i tekst) */
+    gap: 8px; /* Odstęp między logo a tekstem stołu */
+  }
+
+  #logoLeftArea #logoLeft { /* Styl dla samego obrazka logo wewnątrz kontenera */
+    height: 128px; /* Zmniejszone o 20% (było 160px) */
+    width: auto;
+  }
+  #logoRight {
+    top: 20px;
+    right: 30px;
+    width: 150px;
+    height: 150px;
+  }
+  #tableText {
+    /* Usunięto position: fixed, top, left, transform - teraz jest pozycjonowany przez flexbox */
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    color: white;
+    text-shadow: 1px 1px 4px black;
+    margin-left: -10px; /* Dodatkowe przesunięcie w prawo o 20px */
+     }
+  #watermark {
+    position: absolute;
+    bottom: 2px; /* Niewielki odstęp od dolnej krawędzi paska */
+    right: 105px; /* Przesunięty o 100px w lewo (było 5px) */
+    font-size: 12px; /* Nieco większa czcionka (było 10px) */
+    color: rgba(255, 255, 255, 0.6); /* Biały z przezroczystością dla subtelnego efektu */
+    z-index: 1; /* Aby być pod innymi elementami, jeśli nachodzą */
+  }
+</style>
 </head>
 <body>
-  <img id="logoLeft" class="corner-logo" src="austrian_open.png" alt="Austrian Open">
+  <!-- Zmieniona struktura dla lewego logo i tekstu stołu -->
+  <div id="logoLeftArea" class="corner-logo">
+    <img id="logoLeft" src="austrian_open.png" alt="Austrian Open">
+    <div id="tableText">Table</div>
+  </div>
   <img id="logoRight" class="corner-logo" src="logo_muklacademy_polysk_alpha.png" alt="MuklAcademy">
 
   <div id="overlay-bar">
@@ -134,18 +161,62 @@
     </div>
     <div class="decor-line"></div>
     <div id="raceToText">Race to 0</div>
-  </div>
+        <div id="watermark">Overlay by Muklacademy/MarcinKwiecien</div>
 
-  <div id="tableText">Table</div>
+  </div>
 
   <script>
     async function updateOverlay() {
+      function formatPlayerNameForDisplay(fullName) {
+        if (!fullName || typeof fullName !== 'string') {
+          return '';
+        }
+        // Podziel na słowa, usuwając puste wpisy (np. po wielokrotnych spacjach)
+        const words = fullName.trim().split(' ').filter(word => word.length > 0);
+        if (words.length === 0) {
+          return '';
+        }
+   let resultHtml = '';
+        let inStrongTag = false;
+
+        for (let i = 0; i < words.length; i++) {
+          const word = words[i];
+          // Słowo jest częścią nazwiska do pogrubienia, jeśli:
+          // 1. Jest całe wielkimi literami.
+          // 2. Zawiera przynajmniej jedną literę (aby odróżnić od np. "-").
+          // 3. Nie jest czysto numeryczne (np. "1990").
+          const isSurnamePart = word === word.toUpperCase() &&
+                                /[A-Z]/.test(word) &&
+                                !/^\d+$/.test(word);
+
+          if (isSurnamePart) {
+            if (!inStrongTag) {
+              resultHtml += (resultHtml.length > 0 ? ' ' : '') + '<strong>';
+              inStrongTag = true;
+            } else {
+              resultHtml += ' '; // Spacja między kolejnymi częściami nazwiska w <strong>
+            }
+            resultHtml += word;
+          } else { // To jest imię lub inna część nie do pogrubienia
+            if (inStrongTag) {
+              resultHtml += '</strong>';
+              inStrongTag = false;
+            }
+            resultHtml += (resultHtml.length > 0 ? ' ' : '') + word;
+          }
+        }
+        if (inStrongTag) {
+          resultHtml += '</strong>'; // Zamknij tag, jeśli ostatnie słowo było częścią nazwiska
+        }
+        return resultHtml;
+      }
+
       try {
         const res = await fetch("https://epbf-overlay-backend-production.up.railway.app/score");
         const data = await res.json();
 
-        document.getElementById('player1').innerText = data.player1;
-        document.getElementById('player2').innerText = data.player2;
+        document.getElementById('player1').innerHTML = formatPlayerNameForDisplay(data.player1);
+        document.getElementById('player2').innerHTML = formatPlayerNameForDisplay(data.player2);
         document.getElementById('score1').innerText = data.score1;
         document.getElementById('score2').innerText = data.score2;
         document.getElementById('leftFlag').src = data.flag1;
@@ -176,3 +247,4 @@
   </script>
 </body>
 </html>
+    
