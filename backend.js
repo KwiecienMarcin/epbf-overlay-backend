@@ -8,7 +8,7 @@ app.use(cors());
 
 const PORT = process.env.PORT || 3000;
 const EPBF_URL = 'https://www.epbf.com/tournaments/eurotour/id/1334/draw-results/';
-const PLAYER_ID = '3231'; // Zahardkodowane ID gracza
+const PLAYER_ID = '3231'; // <-- twardo ustawione ID MACIOL Daniel
 
 function cleanPlayerName(cell) {
   const fullText = cell.text().trim().split('\n').map(s => s.trim()).filter(Boolean);
@@ -34,6 +34,7 @@ app.get('/score', async (req, res) => {
       const isRoundHeadline = $(tbody).hasClass('round_headline');
       const isMatchTable = $(tbody).hasClass('round_table');
 
+      // Zapisz nazwę rundy
       if (isRoundHeadline) {
         const roundName = $(tbody).find('h3.h3').text().trim();
         if (roundName) {
@@ -41,6 +42,7 @@ app.get('/score', async (req, res) => {
         }
       }
 
+      // Przeszukaj mecze w tej rundzie
       if (isMatchTable) {
         $(tbody).find('tr').each((i, el) => {
           const tds = $(el).find('td');
@@ -49,14 +51,11 @@ app.get('/score', async (req, res) => {
           const p1Cell = $(tds[4]);
           const p2Cell = $(tds[9]).length ? $(tds[9]) : $(tds[10]);
 
-          const p1Href = p1Cell.find('a').attr('href') || '';
-          const p2Href = p2Cell.find('a').attr('href') || '';
+          // Czy któryś gracz ma link z naszym PLAYER_ID
+          const p1HasPlayer = p1Cell.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0;
+          const p2HasPlayer = p2Cell.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0;
 
-          const p1Id = p1Href.match(/player\/show\/(\d+)\//)?.[1];
-          const p2Id = p2Href.match(/player\/show\/(\d+)\//)?.[1];
-
-          if (p1Id !== PLAYER_ID && p2Id !== PLAYER_ID) return;
-
+          if (!p1HasPlayer && !p2HasPlayer) return;
 
           const player1 = cleanPlayerName(p1Cell);
           const player2 = cleanPlayerName(p2Cell);
@@ -66,12 +65,11 @@ app.get('/score', async (req, res) => {
           const table = $(tds[11]).text().trim();
           const flag1 = getFullFlagUrl($(tds[5]).find('img').attr('src'));
           const flag2 = getFullFlagUrl($(tds[10]).find('img').attr('src')) || getFullFlagUrl($(tds[9]).find('img').attr('src'));
-
           const time = $(tds[1]).find('span.d-none.d-sm-block').text().trim();
           const matchId = $(tds[0]).text().trim();
 
+          // Pomijaj walkovery i puste
           if (!player1 || !player2 || score1 === '' || score2 === '') return;
-
           if (
             player1.toLowerCase().includes('walkover') ||
             player2.toLowerCase().includes('walkover')
