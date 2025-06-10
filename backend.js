@@ -61,7 +61,7 @@ app.get('/score', async (req, res) => {
     let matchFound = false;
     const playerHistory = [];
     let currentSectionAbbreviation = '';
-
+    console.log("siema");
     $('table tr').each((i, el) => {
       const tds = $(el).find('td');
       const roundNameCell = $(el).children('td.roundname[colspan="12"]');
