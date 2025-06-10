@@ -40,7 +40,7 @@ app.get('/score', async (req, res) => {
             raceTo: $(tds[3]).text().trim(),
             player1: cleanPlayerName($(tds[4])),
             flag1: getFullFlagUrl($(tds[5]).find('img').attr('src')),
-            score1: '8',
+            score1: $(tds[6]).text().trim(),
             score2: $(tds[8]).text().trim(),
             flag2: getFullFlagUrl($(tds[8]).find('img').attr('src'))
               || getFullFlagUrl($(tds[9]).find('img').attr('src'))
