@@ -26,29 +26,35 @@ function getFullFlagUrl(src) {
 function abbreviateSectionTitle(title) {
   if (!title) return '';
 
-  // Specific mappings for "SE - " titles based on user's desired output
-  // Keys should exactly match the text content of the h3.h3 elements
+  // Specific mappings for "SE - " titles.
+  // Keys should exactly match the text content of the h3.h3 elements.
   const seMap = {
-    "SE - Last 32 (L32)": "L32",
-    "SE - Last 16 (L16)": "L16",
-    "SE - Quarter Finals (QF)": "QF",
-    "SE - Semi Finals (SF)": "SF",
-    "SE - Final (F)": "F"
-    // Add other specific SE titles if they appear differently
+    "SE - Last 32": "L32", // Assuming h3 text is "SE - Last 32"
+    "SE - Last 16": "L16", // Assuming h3 text is "SE - Last 16"
+    "SE - Quarter Finals": "QF",
+    "SE - Semi Finals": "SF",
+    "SE - Final": "F"
+    // Add other specific SE titles if they appear differently on the page
   };
 
+  // Check if the exact title (potentially including parentheses if they are in the h3) is in the map
   if (seMap[title]) {
     return seMap[title];
   }
+  // Check if a version of the title without parentheses is in the map
+  const titleWithoutParentheses = title.replace(/\(.*?\)/g, '').trim();
+  if (seMap[titleWithoutParentheses]) {
+    return seMap[titleWithoutParentheses];
+  }
+
 
   let processedTitle = title;
   // If it's an SE title not caught by the map, strip "SE - " for general processing
-  if (title.startsWith('SE - ')) {
-    processedTitle = title.substring(5).trim();
+  if (processedTitle.startsWith('SE - ')) {
+    processedTitle = processedTitle.substring(5).trim();
   }
 
-  // Remove any content within parentheses for general processing
-  // e.g., "Winners Round 1 (WR1)" becomes "Winners Round 1"
+  // Remove any other content within parentheses for general processing
   processedTitle = processedTitle.replace(/\(.*?\)/g, '').trim();
 
   const words = processedTitle.split(/\s+/);
@@ -80,9 +86,40 @@ app.get('/score', async (req, res) => {
     const playerHistory = [];
     let currentSectionAbbreviation = '';
 
+    // --- Pass 1: Find the current match (MATCH_ID) ---
+    // This iterates all tables to ensure the current match is found.
+    $('table tr').each((idx, tableRowElement) => {
+        if (matchFound) return false; // Stop iterating if already found
+
+        const $tableRow = $(tableRowElement);
+        const cells = $tableRow.find('td');
+
+        if (cells.length < 12) return; // Skip rows not matching match structure
+
+        const rowTextContent = $tableRow.text();
+        if (rowTextContent.includes(MATCH_ID)) {
+            currentMatchData = {
+                matchId: MATCH_ID,
+                raceTo: $(cells[3]).text().trim(),
+                player1: cleanPlayerName($(cells[4])),
+                flag1: getFullFlagUrl($(cells[5]).find('img').attr('src')),
+                score1: $(cells[6]).text().trim(),
+                score2: $(cells[8]).text().trim(),
+                flag2: getFullFlagUrl($(cells[8]).find('img').attr('src'))
+                        || getFullFlagUrl($(cells[9]).find('img').attr('src'))
+                        || getFullFlagUrl($(cells[10]).find('img').attr('src')),
+                player2: cleanPlayerName($(cells[9])) || cleanPlayerName($(cells[10])),
+                table: $(cells[11]).text().trim()
+            };
+            matchFound = true;
+            return false; // Found the match, stop this loop
+        }
+    });
+
+    // --- Pass 2: Build player history with round context ---
     // Iterate over direct children of the main content area that contains both H3s and table containers
-    // This selector targets the typical Bootstrap column structure on EPBF pages.
-    const mainContentContainer = $('div.col-md-12').first(); // Adjust if the container is different
+    // Adjust 'div.col-md-12' if the main container has a different selector.
+    const mainContentContainer = $('div.col-md-12').first();
 
     mainContentContainer.children().each((i, elementNode) => {
         const $element = $(elementNode);
@@ -90,39 +127,17 @@ app.get('/score', async (req, res) => {
         if ($element.is('h3.h3')) { // Check if the element is an H3 with class 'h3'
             const sectionTitle = $element.text().trim();
             currentSectionAbbreviation = abbreviateSectionTitle(sectionTitle);
-            // console.log(`Found round header: '${sectionTitle}', Abbreviation: '${currentSectionAbbreviation}'`);
+            // console.log(`HISTORY: Found round header: '${sectionTitle}', Abbreviation: '${currentSectionAbbreviation}'`);
         } else if ($element.is('div.table-responsive')) {
-            // This div contains the table, so now iterate its rows
+            // This div contains the table, so now iterate its rows for history
             $element.find('table > tbody > tr').each((j, rowElement) => {
                 const $row = $(rowElement);
                 const tds = $row.find('td');
 
-                // Ensure row has enough cells for parsing a match row
-                if (tds.length < 12) return;
+                if (tds.length < 12) return; // Skip rows not matching match structure
                 const rowMatchId = $(tds[0]).text().trim();
 
-                // 1. Current match data (based on hardcoded MATCH_ID)
-                if (!matchFound) {
-                    const rowText = $row.text();
-                    if (rowText.includes(MATCH_ID)) {
-                        currentMatchData = {
-                            matchId: MATCH_ID,
-                            raceTo: $(tds[3]).text().trim(),
-                            player1: cleanPlayerName($(tds[4])),
-                            flag1: getFullFlagUrl($(tds[5]).find('img').attr('src')),
-                            score1: $(tds[6]).text().trim(),
-                            score2: $(tds[8]).text().trim(),
-                            flag2: getFullFlagUrl($(tds[8]).find('img').attr('src'))
-                              || getFullFlagUrl($(tds[9]).find('img').attr('src'))
-                              || getFullFlagUrl($(tds[10]).find('img').attr('src')),
-                            player2: cleanPlayerName($(tds[9])) || cleanPlayerName($(tds[10])),
-                            table: $(tds[11]).text().trim()
-                        };
-                        matchFound = true;
-                    }
-                }
-
-                // 2. Player history (using global PLAYER_ID)
+                // Player history (using global PLAYER_ID), excluding the current live match
                 if (PLAYER_ID && rowMatchId !== MATCH_ID) {
                     const p1Cell = $(tds[4]);
                     const p2CellForNameLogic1 = $(tds[9]);
@@ -138,7 +153,7 @@ app.get('/score', async (req, res) => {
                                         p2CellForNameLogic2.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0;
 
                     let historyEntry = null;
-                    if (p1Name && p2Name && p1Score !== '' && p2Score !== '') { // Basic check for valid data
+                    if (p1Name && p2Name && p1Score !== '' && p2Score !== '') {
                         if (p1LinkFound && p2Name.toLowerCase() !== 'walkover') {
                             historyEntry = `${p1Name} ${p1Score} - ${p2Score} ${p2Name}`;
                         } else if (p2LinkFound && p1Name.toLowerCase() !== 'walkover') {
@@ -154,18 +169,15 @@ app.get('/score', async (req, res) => {
         }
     });
 
-    if (matchFound || playerHistory.length > 0) { // Return data if current match or history is found
+    if (matchFound) { // If current match was found, always return it
       const responsePayload = { ...currentMatchData };
       responsePayload.playerHistory = playerHistory;
       res.json(responsePayload);
     } else {
-      // Consider if 404 is appropriate if only history was sought and not found,
-      // or if current match is mandatory. For now, 404 if current match not found.
-      if (!matchFound && MATCH_ID) { // If a specific match was sought and not found
-          res.status(404).json({ error: `Match with ID ${MATCH_ID} not found` });
-      } else { // If no specific match was sought or if it's okay to return just history (or empty)
-          res.json({ playerHistory }); // Or { ...currentMatchData, playerHistory } if currentMatchData might be empty but valid
-      }
+      // If current match was NOT found, but we might have history (e.g. if MATCH_ID was for a completed match)
+      // Or if MATCH_ID was not set/relevant and we only wanted history.
+      // For now, if MATCH_ID was specified and not found, it's an error.
+      res.status(404).json({ error: `Match with ID ${MATCH_ID} not found` });
     }
   } catch (err) {
     console.error('Error in /score endpoint:', err.message, err.stack);
