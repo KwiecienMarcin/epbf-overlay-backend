@@ -24,38 +24,24 @@ function getFullFlagUrl(src) {
 }
 
 function abbreviateSectionTitle(title) {
-  if (!title) return '';
-  const seMap = {
+  const map = {
+    "Round 1": "R1",
+    "Winners Round 1": "WR1",
+    "Winners Round 2": "WR2",
+    "Winners Qualification": "WQ",
+    "Losers Round 1": "LR1",
+    "Losers Round 2": "LR2",
+    "Losers Round 3": "LR3",
+    "Losers Round 4": "LR4",
+    "Losers Round 5": "LR5",
+    "Losers Qualification": "LQ",
     "SE - Last 32": "L32",
     "SE - Last 16": "L16",
     "SE - Quarter Finals": "QF",
     "SE - Semi Finals": "SF",
     "SE - Final": "F"
   };
-
-  if (seMap[title]) {
-    return seMap[title];
-  }
-
-  let processedTitle = title;
-  if (title.startsWith('SE - ')) {
-    processedTitle = title.substring(5).trim();
-  }
-
-  processedTitle = processedTitle.replace(/\(.*?\)/g, '').trim();
-
-  const words = processedTitle.split(/\s+/);
-  let abbreviation = '';
-  let collectedNumbers = '';
-  words.forEach(word => {
-    if (!word) return;
-    if (/^[a-zA-Z]+(-[a-zA-Z]+)*$/.test(word)) {
-      abbreviation += word.charAt(0).toUpperCase();
-    } else if (/^\d+(\/\d+)?$/.test(word)) {
-      collectedNumbers += word;
-    }
-  });
-  return abbreviation + collectedNumbers;
+  return map[title.trim()] || '';
 }
 
 app.get('/score', async (req, res) => {
@@ -66,70 +52,63 @@ app.get('/score', async (req, res) => {
     let currentMatchData = {};
     let matchFound = false;
     const playerHistory = [];
-    let currentSectionAbbreviation = '';
-    let lastSeenSectionTitle = '';
 
-    $('table tr').each((i, el) => {
-      const tds = $(el).find('td');
+    $('h3.h3').each((i, el) => {
+      const sectionTitle = $(el).text().trim();
+      const sectionAbbrev = abbreviateSectionTitle(sectionTitle);
+      const table = $(el).next('table');
 
-      const roundNameCell = $(el).children('td.roundname[colspan="12"]');
-      if (roundNameCell.length > 0) {
-        const sectionTitle = roundNameCell.text().trim();
-        currentSectionAbbreviation = abbreviateSectionTitle(sectionTitle);
-        lastSeenSectionTitle = sectionTitle;
-        return;
-      }
+      table.find('tr').each((j, row) => {
+        const tds = $(row).find('td');
+        if (tds.length < 12) return;
 
-      if (tds.length < 12) return;
-      const rowMatchId = $(tds[0]).text().trim();
+        const rowMatchId = $(tds[0]).text().trim();
 
-      if (!matchFound) {
-        const rowText = $(el).text();
-        if (rowText.includes(MATCH_ID)) {
+        // Bieżący mecz
+        if (!matchFound && rowMatchId === MATCH_ID) {
           currentMatchData = {
-            matchId: MATCH_ID,
+            matchId: rowMatchId,
             raceTo: $(tds[3]).text().trim(),
             player1: cleanPlayerName($(tds[4])),
             flag1: getFullFlagUrl($(tds[5]).find('img').attr('src')),
             score1: $(tds[6]).text().trim(),
             score2: $(tds[8]).text().trim(),
-            flag2: getFullFlagUrl($(tds[8]).find('img').attr('src'))
-              || getFullFlagUrl($(tds[9]).find('img').attr('src'))
-              || getFullFlagUrl($(tds[10]).find('img').attr('src')),
+            flag2: getFullFlagUrl($(tds[8]).find('img').attr('src')) ||
+                   getFullFlagUrl($(tds[9]).find('img').attr('src')) ||
+                   getFullFlagUrl($(tds[10]).find('img').attr('src')),
             player2: cleanPlayerName($(tds[9])) || cleanPlayerName($(tds[10])),
             table: $(tds[11]).text().trim()
           };
           matchFound = true;
         }
-      }
 
-      if (PLAYER_ID && rowMatchId !== MATCH_ID) {
-        const p1Cell = $(tds[4]);
-        const p2Cell1 = $(tds[9]);
-        const p2Cell2 = $(tds[10]);
+        // Historia gracza
+        if (PLAYER_ID && rowMatchId !== MATCH_ID) {
+          const p1Cell = $(tds[4]);
+          const p2Cell1 = $(tds[9]);
+          const p2Cell2 = $(tds[10]);
 
-        const p1Name = cleanPlayerName(p1Cell);
-        const p2Name = cleanPlayerName(p2Cell1) || cleanPlayerName(p2Cell2);
-        const p1Score = $(tds[6]).text().trim();
-        const p2Score = $(tds[8]).text().trim();
+          const p1Name = cleanPlayerName(p1Cell);
+          const p2Name = cleanPlayerName(p2Cell1) || cleanPlayerName(p2Cell2);
+          const p1Score = $(tds[6]).text().trim();
+          const p2Score = $(tds[8]).text().trim();
 
-        const p1Link = p1Cell.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0;
-        const p2Link = p2Cell1.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0 || p2Cell2.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0;
+          const p1Link = p1Cell.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0;
+          const p2Link = p2Cell1.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0 ||
+                         p2Cell2.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0;
 
-        let historyEntry = null;
-        if (p1Name && p2Name && p1Score !== '' && p2Score !== '') {
+          let historyEntry = null;
           if (p1Link && p2Name.toLowerCase() !== 'walkover') {
             historyEntry = `${p1Name} ${p1Score} - ${p2Score} ${p2Name}`;
           } else if (p2Link && p1Name.toLowerCase() !== 'walkover') {
             historyEntry = `${p2Name} ${p2Score} - ${p1Score} ${p1Name}`;
           }
-        }
 
-        if (historyEntry) {
-          playerHistory.push(`${currentSectionAbbreviation}: ${historyEntry}`);
-
+          if (historyEntry) {
+            playerHistory.push(`${sectionAbbrev}: ${historyEntry}`);
+          }
         }
-      }
+      });
     });
 
     if (matchFound) {
