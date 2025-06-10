@@ -8,7 +8,7 @@ app.use(cors());
 
 const PORT = process.env.PORT || 3000;
 const EPBF_URL = 'https://www.epbf.com/tournaments/european-championships/live/1320/draw-results/';
-const MATCH_ID = 'A095';
+const MATCH_ID = 'A094';
 
 function cleanPlayerName(cell) {
   const fullText = cell.text().trim().split('\n').map(s => s.trim()).filter(Boolean);
@@ -40,7 +40,7 @@ app.get('/score', async (req, res) => {
             raceTo: $(tds[3]).text().trim(),
             player1: cleanPlayerName($(tds[4])),
             flag1: getFullFlagUrl($(tds[5]).find('img').attr('src')),
-            score1: '5',
+            score1: $(tds[6]).text().trim(),
             score2: $(tds[8]).text().trim(),
             flag2: getFullFlagUrl($(tds[8]).find('img').attr('src'))
               || getFullFlagUrl($(tds[9]).find('img').attr('src'))
