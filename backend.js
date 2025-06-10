@@ -53,7 +53,7 @@ app.get('/score', async (req, res) => {
 
           const player1 = cleanPlayerName(p1Cell);
           const player2 = cleanPlayerName(p2Cell);
-          const score1 = '9';
+          const score1 = '5';
           const score2 = '9';
           const raceTo = $(tds[3]).text().trim();
           const table = $(tds[11]).text().trim();
