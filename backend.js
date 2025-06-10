@@ -8,7 +8,7 @@ app.use(cors());
 
 const PORT = process.env.PORT || 3000;
 const EPBF_URL = 'https://www.epbf.com/tournaments/eurotour/id/1334/draw-results/';
-const PLAYER_ID = '14045';
+const PLAYER_ID = '3231'; // Zahardkodowane ID gracza
 
 function cleanPlayerName(cell) {
   const fullText = cell.text().trim().split('\n').map(s => s.trim()).filter(Boolean);
@@ -31,17 +31,17 @@ app.get('/score', async (req, res) => {
     let currentRound = '';
 
     $('tbody').each((i, tbody) => {
-      const roundHeadline = $(tbody).hasClass('round_headline');
-      const roundTable = $(tbody).hasClass('round_table');
+      const isRoundHeadline = $(tbody).hasClass('round_headline');
+      const isMatchTable = $(tbody).hasClass('round_table');
 
-      if (roundHeadline) {
+      if (isRoundHeadline) {
         const roundName = $(tbody).find('h3.h3').text().trim();
         if (roundName) {
           currentRound = roundName;
         }
       }
 
-      if (roundTable) {
+      if (isMatchTable) {
         $(tbody).find('tr').each((i, el) => {
           const tds = $(el).find('td');
           if (tds.length < 12) return;
@@ -49,10 +49,13 @@ app.get('/score', async (req, res) => {
           const p1Cell = $(tds[4]);
           const p2Cell = $(tds[9]).length ? $(tds[9]) : $(tds[10]);
 
-          const p1Link = p1Cell.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0;
-          const p2Link = p2Cell.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0;
+          const p1Href = p1Cell.find('a').attr('href') || '';
+          const p2Href = p2Cell.find('a').attr('href') || '';
 
-          if (!p1Link && !p2Link) return;
+          const p1Id = p1Href.match(/\/player\/show\/(\d+)\//)?.[1];
+          const p2Id = p2Href.match(/\/player\/show\/(\d+)\//)?.[1];
+
+          if (p1Id !== PLAYER_ID && p2Id !== PLAYER_ID) return;
 
           const player1 = cleanPlayerName(p1Cell);
           const player2 = cleanPlayerName(p2Cell);
