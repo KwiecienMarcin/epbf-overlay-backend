@@ -2,9 +2,10 @@ const express = require('express');
 const axios = require('axios');
 const cheerio = require('cheerio');
 const cors = require('cors');
-const app = express();
 
+const app = express();
 app.use(cors());
+
 const PORT = process.env.PORT || 3000;
 const EPBF_URL = 'https://www.epbf.com/tournaments/eurotour/id/1334/draw-results/';
 const MATCH_ID = 'SE20';
@@ -23,7 +24,7 @@ function getFullFlagUrl(src) {
 }
 
 function abbreviateSectionTitle(title) {
-  const map = {
+  const roundMap = {
     "Round 1": "R1",
     "Winners Round 1": "WR1",
     "Winners Round 2": "WR2",
@@ -40,7 +41,7 @@ function abbreviateSectionTitle(title) {
     "SE - Semi Finals": "SF",
     "SE - Final": "F"
   };
-  return map[title.trim()] || '';
+  return roundMap[title.trim()] || '';
 }
 
 app.get('/score', async (req, res) => {
@@ -48,21 +49,24 @@ app.get('/score', async (req, res) => {
     const response = await axios.get(EPBF_URL);
     const $ = cheerio.load(response.data);
 
-    let currentMatchData = {};
-    let matchFound = false;
+    let currentMatchData = null;
     const playerHistory = [];
 
-    $('h3.h3').each((_, section) => {
-      const sectionTitle = $(section).text().trim();
-      const abbreviation = abbreviateSectionTitle(sectionTitle);
-      const nextTable = $(section).next('table');
+    $('h3.h3').each((_, headerEl) => {
+      const sectionTitle = $(headerEl).text().trim();
+      const sectionAbbreviation = abbreviateSectionTitle(sectionTitle);
 
-      nextTable.find('tr').each((_, row) => {
-        const tds = $(row).find('td');
+      const table = $(headerEl).next('table');
+      if (!table) return;
+
+      table.find('tr').each((i, el) => {
+        const tds = $(el).find('td');
         if (tds.length < 12) return;
 
         const rowMatchId = $(tds[0]).text().trim();
-        if (!matchFound && rowMatchId === MATCH_ID) {
+
+        // MAIN MATCH
+        if (!currentMatchData && rowMatchId === MATCH_ID) {
           currentMatchData = {
             matchId: MATCH_ID,
             raceTo: $(tds[3]).text().trim(),
@@ -70,52 +74,54 @@ app.get('/score', async (req, res) => {
             flag1: getFullFlagUrl($(tds[5]).find('img').attr('src')),
             score1: $(tds[6]).text().trim(),
             score2: $(tds[8]).text().trim(),
-            flag2: getFullFlagUrl($(tds[8]).find('img').attr('src')) ||
-                   getFullFlagUrl($(tds[9]).find('img').attr('src')) ||
-                   getFullFlagUrl($(tds[10]).find('img').attr('src')),
+            flag2: getFullFlagUrl($(tds[8]).find('img').attr('src'))
+              || getFullFlagUrl($(tds[9]).find('img').attr('src'))
+              || getFullFlagUrl($(tds[10]).find('img').attr('src')),
             player2: cleanPlayerName($(tds[9])) || cleanPlayerName($(tds[10])),
             table: $(tds[11]).text().trim()
           };
-          matchFound = true;
         }
 
-        if (rowMatchId !== MATCH_ID) {
+        // HISTORY
+        if (PLAYER_ID && rowMatchId !== MATCH_ID) {
           const p1Cell = $(tds[4]);
-          const p2Cell = $(tds[9]).length ? $(tds[9]) : $(tds[10]);
+          const p2Cell1 = $(tds[9]);
+          const p2Cell2 = $(tds[10]);
 
           const p1Name = cleanPlayerName(p1Cell);
-          const p2Name = cleanPlayerName(p2Cell);
           const p1Score = $(tds[6]).text().trim();
           const p2Score = $(tds[8]).text().trim();
+          const p2Name = cleanPlayerName(p2Cell1) || cleanPlayerName(p2Cell2);
 
-          const p1Link = p1Cell.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0;
-          const p2Link = p2Cell.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0;
+          const p1LinkFound = p1Cell.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0;
+          const p2LinkFound = p2Cell1.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0 ||
+                              p2Cell2.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length > 0;
 
-          if ((p1Link || p2Link) && p1Score !== '' && p2Score !== '') {
-            let line = '';
-            if (p1Link && p2Name.toLowerCase() !== 'walkover') {
-              line = `${p1Name} ${p1Score} - ${p2Score} ${p2Name}`;
-            } else if (p2Link && p1Name.toLowerCase() !== 'walkover') {
-              line = `${p2Name} ${p2Score} - ${p1Score} ${p1Name}`;
+          let historyEntry = null;
+          if (p1Name && p2Name && p1Score !== '' && p2Score !== '') {
+            if (p1LinkFound && p2Name.toLowerCase() !== 'walkover') {
+              historyEntry = `${p1Name} ${p1Score} - ${p2Score} ${p2Name}`;
+            } else if (p2LinkFound && p1Name.toLowerCase() !== 'walkover') {
+              historyEntry = `${p2Name} ${p2Score} - ${p1Score} ${p1Name}`;
             }
+          }
 
-            if (line) {
-              playerHistory.push(`${abbreviation}: ${line}`);
-            }
+          if (historyEntry) {
+            playerHistory.push(`${sectionAbbreviation}: ${historyEntry}`);
           }
         }
       });
     });
 
-    if (matchFound) {
-      const result = { ...currentMatchData, playerHistory };
-      res.json(result);
+    if (currentMatchData) {
+      currentMatchData.playerHistory = playerHistory;
+      res.json(currentMatchData);
     } else {
-      res.status(404).json({ error: "Match not found" });
+      res.status(404).json({ error: 'Match not found' });
     }
   } catch (err) {
-    console.error("Error in /score endpoint:", err.message, err.stack);
-    res.status(500).json({ error: "Internal server error", details: err.message });
+    console.error('Error in /score endpoint:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
