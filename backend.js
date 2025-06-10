@@ -126,8 +126,8 @@ app.get('/score', async (req, res) => {
         }
 
         if (historyEntry) {
-          const abbrev = abbreviateSectionTitle(lastSeenSectionTitle);
-          playerHistory.push(`${abbrev}: ${historyEntry}`);
+          playerHistory.push(`${currentSectionAbbreviation}: ${historyEntry}`);
+
         }
       }
     });
