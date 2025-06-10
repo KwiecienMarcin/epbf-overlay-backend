@@ -7,8 +7,6 @@ const app = express();
 app.use(cors());
 
 const PORT = process.env.PORT || 3000;
-const EPBF_URL = 'https://www.epbf.com/tournaments/eurotour/id/1334/draw-results/';
-const PLAYER_ID = '3231';
 
 function cleanPlayerName(cell) {
   const parts = cell.text().trim().split('\n').map(s => s.trim()).filter(Boolean);
@@ -21,6 +19,14 @@ function getFullFlagUrl(src) {
 }
 
 app.get('/score', async (req, res) => {
+  const { tournamentId, playerId } = req.query;
+
+  if (!tournamentId || !playerId) {
+    return res.status(400).json({ error: 'Missing tournamentId or playerId parameter' });
+  }
+
+  const EPBF_URL = `https://www.epbf.com/tournaments/eurotour/id/${tournamentId}/draw-results/`;
+
   try {
     const html = (await axios.get(EPBF_URL)).data;
     const $ = cheerio.load(html);
@@ -37,12 +43,12 @@ app.get('/score', async (req, res) => {
           if (tds.length < 12) return;
 
           const p1Cell = $(tds[4]);
-          const p2Cell = $(tds[10]); // <- zawsze name_b
+          const p2Cell = $(tds[10]);
           const flag1Cell = $(tds[5]);
           const flag2Cell = $(tds[9]);
 
-          const hasP1 = p1Cell.find(`a[href*="player/show/${PLAYER_ID}/"]`).length > 0;
-          const hasP2 = p2Cell.find(`a[href*="player/show/${PLAYER_ID}/"]`).length > 0;
+          const hasP1 = p1Cell.find(`a[href*="player/show/${playerId}/"]`).length > 0;
+          const hasP2 = p2Cell.find(`a[href*="player/show/${playerId}/"]`).length > 0;
           if (!hasP1 && !hasP2) return;
 
           const player1 = cleanPlayerName(p1Cell);
@@ -56,7 +62,6 @@ app.get('/score', async (req, res) => {
           const time = $(tds[1]).find('span.d-none.d-sm-block').text().trim();
           const matchId = $(tds[0]).text().trim();
 
-          // Pomijamy walkovery i braki danych
           if (
             !player1 || !player2 ||
             score1 === '' || score2 === '' ||
@@ -81,4 +86,4 @@ app.get('/score', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log('Listening on', PORT));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
