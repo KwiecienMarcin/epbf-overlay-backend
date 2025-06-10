@@ -27,17 +27,19 @@ function abbreviateSectionTitle(title) {
   if (!title) return '';
   const words = title.trim().split(/\s+/);
   let abbreviation = '';
-  let numbers = '';
+  let collectedNumbers = '';
   words.forEach(word => {
-    // Regex to match numbers like "1", "32", or fractions like "1/32"
-    if (/^\d+(\/\d+)?$/.test(word)) {
-      numbers += word;
-    } else if (word.length > 0 && isNaN(parseInt(word.charAt(0)))) {
-      // Take the first character if it's a word (not starting with a number unless it's a pure number handled above)
+    // Pobierz pierwszą literę, jeśli słowo zawiera litery
+    if (/[a-zA-Z]/.test(word)) {
       abbreviation += word.charAt(0).toUpperCase();
     }
+        // Pobierz część numeryczną ze słowa (np. "1", "1/32", lub "1" z "Round1")
+    const numberMatch = word.match(/\d+(\/\d+)?/); // Dopasowuje liczby lub ułamki
+    if (numberMatch) {
+      collectedNumbers += numberMatch[0]; // Dodaj pierwszą znalezioną liczbę/ułamek
+    }
   });
-  return abbreviation + numbers;
+  return abbreviation + collectedNumbers;
 }
 
 app.get('/score', async (req, res) => {
@@ -114,7 +116,7 @@ const p1LinkFound = p1Cell.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length 
         }
         
         if (historyEntry) {
-            playerHistory.push(`${currentSectionAbbreviation}: ${historyEntry}`);
+            playerHistory.push(`${currentSectionAbbreviation}: ${historyEntry}`); // Always include abbreviation and colon
         }
       }
     });
