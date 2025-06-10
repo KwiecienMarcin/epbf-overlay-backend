@@ -145,10 +145,8 @@
   #playerMatchHistoryContainer {
     position: fixed;
     top: calc(20px + 150px + 10px); /* Positioned below logoRight (top + height + gap) */
-    right: 30px; /* Aligns with logoRight's right edge */
+    right: 10px; /* Aligns with logoRight's right edge */
     width: 220px; /* Adjust width as needed */
-    max-height: 150px; /* Limit height and allow scrolling */
-    overflow-y: auto; /* Add scrollbar if content exceeds max-height */
     background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent background */
     color: white;
     font-family: 'Rajdhani', sans-serif;
@@ -338,7 +336,15 @@
           historyListEl.innerHTML = ''; // Clear previous entries
           data.playerHistory.forEach(matchStr => {
             const matchDiv = document.createElement('div');
-            matchDiv.innerText = matchStr;
+            const colonIdx = matchStr.indexOf(':');
+            if (colonIdx !== -1) {
+              const round = matchStr.slice(0, colonIdx).trim();
+              const text = matchStr.slice(colonIdx + 1).trim();
+              matchDiv.innerHTML = `<strong>${round}</strong>: ${text}`;
+            } else {
+              matchDiv.innerText = matchStr;
+            }
+
             historyListEl.appendChild(matchDiv);
           });
           historyContainer.style.display = 'block';
