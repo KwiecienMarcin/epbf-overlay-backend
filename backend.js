@@ -8,7 +8,7 @@ app.use(cors());
 
 const PORT = process.env.PORT || 3000;
 const EPBF_URL = 'https://www.epbf.com/tournaments/eurotour/id/1334/draw-results/';
-const MATCH_ID = 'C002';
+const MATCH_ID = 'C033';
 const PLAYER_ID = '14045'; // Hardcoded Player ID
 
 function cleanPlayerName(cell) {
@@ -79,9 +79,9 @@ const p1LinkFound = p1Cell.find(`a[href*="/player/show/${PLAYER_ID}/"]`).length 
         
         let historyEntry = null;
         if (p1Name && p2Name && p1Score !== '' && p2Score !== '') { // Basic check for valid data
-            if (p1LinkFound) {
+            if (p1LinkFound && p2Name.toLowerCase() !== 'walkover') {
                 historyEntry = `${p1Name} ${p1Score} - ${p2Score} ${p2Name}`;
-            } else if (p2LinkFound) {
+            } else if (p2LinkFound && p1Name.toLowerCase() !== 'walkover') {
                 historyEntry = `${p2Name} ${p2Score} - ${p1Score} ${p1Name}`;
             }
         }
