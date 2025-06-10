@@ -63,9 +63,10 @@ app.get('/score', async (req, res) => {
     let currentSectionAbbreviation = '';
     console.log("siema");
     $('table tr').each((i, el) => {
+      console.log("ROW HTML:", $.html(el));
       const tds = $(el).find('td');
-      const roundNameCell = $(el).children('td.roundname[colspan="12"]');
-      if (roundNameCell.length > 0) {
+      const roundNameCell = $(el).find('td.roundname');
+      if (roundNameCell.length > 0 && parseInt(roundNameCell.attr('colspan') || '0') >= 6) {
         const sectionTitle = roundNameCell.text().trim();
         currentSectionAbbreviation = abbreviateSectionTitle(sectionTitle);
         console.log("FOUND ROUND TITLE:", sectionTitle, "=>", currentSectionAbbreviation);
