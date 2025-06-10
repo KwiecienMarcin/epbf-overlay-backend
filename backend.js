@@ -36,33 +36,38 @@ app.get('/score', async (req, res) => {
           const tds = $(tr).find('td');
           if (tds.length < 12) return;
 
-          const p1 = $(tds[4]);
-          const p2 = $(tds[9]).length ? $(tds[9]) : $(tds[10]);
-          const matchId = $(tds[0]).text().trim();
-          const time = $(tds[1]).find('span.d-none.d-sm-block').text().trim();
-          const raceTo = $(tds[3]).text().trim();
-          const score1 = $(tds[6]).text().trim();
-          const score2 = $(tds[8]).text().trim();
-          const table = $(tds[11]).text().trim();
-          const flag1 = getFullFlagUrl($(tds[5]).find('img').attr('src'));
-          const flag2 = getFullFlagUrl(
-            $(tds[10]).find('img').attr('src') ||
-            $(tds[9]).find('img').attr('src')
-          );
+          const p1Cell = $(tds[4]);
+          const p2Cell = $(tds[10]); // <- zawsze name_b
+          const flag1Cell = $(tds[5]);
+          const flag2Cell = $(tds[9]);
 
-          const hasP1 = p1.find(`a[href*="player/show/${PLAYER_ID}/"]`).length > 0;
-          const hasP2 = p2.find(`a[href*="player/show/${PLAYER_ID}/"]`).length > 0;
+          const hasP1 = p1Cell.find(`a[href*="player/show/${PLAYER_ID}/"]`).length > 0;
+          const hasP2 = p2Cell.find(`a[href*="player/show/${PLAYER_ID}/"]`).length > 0;
           if (!hasP1 && !hasP2) return;
 
-          const name1 = cleanPlayerName(p1);
-          const name2 = cleanPlayerName(p2);
-          if (![name1, name2, score1, score2, raceTo, time, matchId, table].every(x => x !== undefined)) return;
-          if (name1.toLowerCase().includes('walkover') || name2.toLowerCase().includes('walkover')) return;
+          const player1 = cleanPlayerName(p1Cell);
+          const player2 = cleanPlayerName(p2Cell);
+          const score1 = $(tds[6]).text().trim();
+          const score2 = $(tds[8]).text().trim();
+          const raceTo = $(tds[3]).text().trim();
+          const table = $(tds[11]).text().trim();
+          const flag1 = getFullFlagUrl(flag1Cell.find('img').attr('src'));
+          const flag2 = getFullFlagUrl(flag2Cell.find('img').attr('src'));
+          const time = $(tds[1]).find('span.d-none.d-sm-block').text().trim();
+          const matchId = $(tds[0]).text().trim();
+
+          // Pomijamy walkovery i braki danych
+          if (
+            !player1 || !player2 ||
+            score1 === '' || score2 === '' ||
+            player1.toLowerCase().includes('walkover') ||
+            player2.toLowerCase().includes('walkover')
+          ) return;
 
           all.push({
             matchId, time, round: currentRound,
-            player1: name1, player2: name2,
-            score1, score2, raceTo, table, flag1, flag2
+            player1, player2, score1, score2, raceTo, table,
+            flag1, flag2
           });
         });
       }
