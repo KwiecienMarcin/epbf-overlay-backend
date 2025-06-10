@@ -25,18 +25,42 @@ function getFullFlagUrl(src) {
 
 function abbreviateSectionTitle(title) {
   if (!title) return '';
-  const words = title.trim().split(/\s+/);
+ // Specific mappings for "SE - " titles based on user's desired output (often from parentheses)
+  const seMap = {
+    "SE - Last 32 (L32)": "L32",
+    "SE - Last 16 (L16)": "L16",
+    "SE - Quarter Finals (QF)": "QF",
+    "SE - Semi Finals (SF)": "SF",
+    "SE - Final (F)": "F"
+  };
+
+  if (seMap[title]) {
+    return seMap[title];
+  }
+
+  let processedTitle = title;
+  // If it's an SE title not caught by the map, strip "SE - " for general processing
+  if (title.startsWith('SE - ')) {
+    processedTitle = title.substring(5).trim();
+  }
+
+  // Remove any other content within parentheses for general processing
+  processedTitle = processedTitle.replace(/\(.*?\)/g, '').trim();
+
+  const words = processedTitle.split(/\s+/);
   let abbreviation = '';
   let collectedNumbers = '';
   words.forEach(word => {
-    // Pobierz pierwszą literę, jeśli słowo zawiera litery
-    if (/[a-zA-Z]/.test(word)) {
+    if (!word) return; // Skip empty words if any
+
+    // Check if the word is purely alphabetic (allows hyphens like in "Semi-Finals")
+    if (/^[a-zA-Z]+(-[a-zA-Z]+)*$/.test(word)) {
+
       abbreviation += word.charAt(0).toUpperCase();
-    }
-        // Pobierz część numeryczną ze słowa (np. "1", "1/32", lub "1" z "Round1")
-    const numberMatch = word.match(/\d+(\/\d+)?/); // Dopasowuje liczby lub ułamki
-    if (numberMatch) {
-      collectedNumbers += numberMatch[0]; // Dodaj pierwszą znalezioną liczbę/ułamek
+    } 
+    // Check if the word is purely numeric or a fraction
+    else if (/^\d+(\/\d+)?$/.test(word)) {
+      collectedNumbers += word;
     }
   });
   return abbreviation + collectedNumbers;
@@ -56,18 +80,20 @@ app.get('/score', async (req, res) => {
 
     $('table tr').each((i, el) => {
       const tds = $(el).find('td');
-      // Ensure row has enough cells for parsing
-      if (tds.length < 12) return;
-      const rowMatchId = $(tds[0]).text().trim(); // Get match ID from the first cell of the row
-
-            // Check for section header row (e.g., "Winners Round 1")
+      // Check for section header row FIRST (e.g., "Winners Round 1")
       // These typically have a single td with class "roundname" and colspan="12"
       const roundNameCell = $(el).children('td.roundname[colspan="12"]');
       if (roundNameCell.length > 0) {
         const sectionTitle = roundNameCell.text().trim();
         currentSectionAbbreviation = abbreviateSectionTitle(sectionTitle);
+                // console.log(`Found round header: '${sectionTitle}', Abbreviation: '${currentSectionAbbreviation}'`); // Optional: for debugging
+
         return; // This row is a header, skip further match processing for this row
       }
+
+      // Ensure row has enough cells for parsing a match row
+      if (tds.length < 12) return;
+      const rowMatchId = $(tds[0]).text().trim(); // Get match ID from the first cell of the row
 
       // 1. Current match data (based on hardcoded MATCH_ID)
       if (!matchFound) { // Only process if current match not yet found
