@@ -73,19 +73,29 @@
     justify-content: center;
   }
   .score-box .score {
-    background: #99000f;
+    background: #a80b1b;
     padding: 2.4px 9.6px;
     border-radius: 4.8px;
-    transition: background 0.3s;
+    transition: background-color 0.5s ease-in-out; /* Zmienione dla płynniejszego przejścia koloru tła */
+  }
+  .score-box .score.score-highlight {
+    animation: none !important; /* Zatrzymuje inne animacje (np. pulseRed) na czas podświetlenia */
+    background-color: #FFD700 !important; /* Wymusza żółte tło, !important dla pierwszeństwa */
+    /* Opcjonalnie: zmiana koloru tekstu dla lepszego kontrastu na żółtym tle, np. color: #333; */
+  }
+    .score-box .score.score-win {
+    background-color: #FFD700 !important; /* Żółte tło */
+    color: black !important;             /* Czarny kolor tekstu */
+    animation: none !important;          /* Zatrzymuje inne animacje (pulseRed, score-highlight) */
   }
   .score-box.decisive .score {
-    animation: pulseRed 1s infinite;
+    animation: pulseRed 4s infinite;
   }
   .decor-line {
     width: 100%;
     height: 2px;
     background: linear-gradient(to right, transparent 0%, white 50%, transparent 100%);
-    margin: 1.2px 0;
+    margin: 3px 0;
   }
   #raceToText {
     font-size: 14.4px;
@@ -127,10 +137,33 @@
   #watermark {
     position: absolute;
     bottom: 2px; /* Niewielki odstęp od dolnej krawędzi paska */
-    right: 105px; /* Przesunięty o 100px w lewo (było 5px) */
+    right: -150px;
     font-size: 12px; /* Nieco większa czcionka (było 10px) */
-    color: rgba(255, 255, 255, 0.6); /* Biały z przezroczystością dla subtelnego efektu */
+    color: rgba(255, 255, 255, 0.8); /* Biały z przezroczystością dla subtelnego efektu */
     z-index: 1; /* Aby być pod innymi elementami, jeśli nachodzą */
+      }
+  #playerMatchHistoryContainer {
+    position: fixed;
+    top: calc(20px + 150px + 10px); /* Positioned below logoRight (top + height + gap) */
+    right: 30px; /* Aligns with logoRight's right edge */
+    width: 220px; /* Adjust width as needed */
+    max-height: 150px; /* Limit height and allow scrolling */
+    overflow-y: auto; /* Add scrollbar if content exceeds max-height */
+    background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent background */
+    color: white;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    padding: 8px;
+    border-radius: 4px;
+    z-index: 3; /* Ensure it's above the main bar if overlapping */
+    display: none; /* Initially hidden */
+  }
+  #playerMatchHistoryTitle {
+    font-weight: 700; /* Bold */
+    margin-bottom: 6px;
+  }
+  #playerMatchHistoryList div { /* Each match entry */
+    margin-bottom: 4px;
   }
 </style>
 </head>
@@ -141,6 +174,11 @@
     <div id="tableText">Table</div>
   </div>
   <img id="logoRight" class="corner-logo" src="logo_muklacademy_polysk_alpha.png" alt="MuklAcademy">
+    <!-- Container for Player Match History -->
+  <div id="playerMatchHistoryContainer">
+    <div id="playerMatchHistoryTitle"></div>
+    <div id="playerMatchHistoryList"></div>
+  </div>
 
   <div id="overlay-bar">
     <div class="decor-line"></div>
@@ -166,6 +204,15 @@
   </div>
 
   <script>
+        // Zmienne do przechowywania poprzednich wyników i ID timerów dla animacji
+    let previousScore1 = undefined;
+    let previousScore2 = undefined;
+    let score1TimeoutId = null;
+    let score2TimeoutId = null;
+        // DEFINE THE PLAYER ID YOU WANT TO TRACK HISTORY FOR
+    // Example: For Wojciech Szewczyk on Eurotour 1334, ID is '131'
+    const PLAYER_ID_TO_TRACK = '131'; // << CHANGE THIS TO THE DESIRED PLAYER ID
+
     async function updateOverlay() {
       function formatPlayerNameForDisplay(fullName) {
         if (!fullName || typeof fullName !== 'string') {
@@ -212,13 +259,44 @@
       }
 
       try {
-        const res = await fetch("https://epbf-overlay-backend-production.up.railway.app/score");
+        let fetchUrl = "https://epbf-overlay-backend-production.up.railway.app/score";
+        if (PLAYER_ID_TO_TRACK) {
+          fetchUrl += `?playerId=${PLAYER_ID_TO_TRACK}`;
+        }
+        const res = await fetch(fetchUrl);
         const data = await res.json();
+
+        const score1El = document.getElementById('score1');
+        const score2El = document.getElementById('score2');
+        const newScore1 = data.score1;
+        const newScore2 = data.score2;
+
+        // Aktualizacja wyświetlanych wyników
+        score1El.innerText = newScore1;
+        score2El.innerText = newScore2;
+
+        // Animacja dla wyniku gracza 1
+        if (previousScore1 !== undefined && previousScore1 !== newScore1) {
+          if (score1TimeoutId) clearTimeout(score1TimeoutId);
+          score1El.classList.add('score-highlight');
+          score1TimeoutId = setTimeout(() => {
+            score1El.classList.remove('score-highlight');
+            score1TimeoutId = null;
+          }, 2000);
+        }
+
+        // Animacja dla wyniku gracza 2
+        if (previousScore2 !== undefined && previousScore2 !== newScore2) {
+          if (score2TimeoutId) clearTimeout(score2TimeoutId);
+          score2El.classList.add('score-highlight');
+          score2TimeoutId = setTimeout(() => {
+            score2El.classList.remove('score-highlight');
+            score2TimeoutId = null;
+          }, 2000);
+        }
 
         document.getElementById('player1').innerHTML = formatPlayerNameForDisplay(data.player1);
         document.getElementById('player2').innerHTML = formatPlayerNameForDisplay(data.player2);
-        document.getElementById('score1').innerText = data.score1;
-        document.getElementById('score2').innerText = data.score2;
         document.getElementById('leftFlag').src = data.flag1;
         document.getElementById('rightFlag').src = data.flag2;
         document.getElementById('raceToText').innerText = `Race to ${data.raceTo}`;
@@ -229,16 +307,54 @@
         const s2 = parseInt(data.score2);
         const race = parseInt(data.raceTo);
 
-        if (!isNaN(s1) && !isNaN(s2) && !isNaN(race)) {
-          if (s1 === race - 1 && s2 === race - 1) {
+// Sprawdzenie warunku wygranej
+        const p1Wins = !isNaN(s1) && !isNaN(race) && s1 === race;
+        const p2Wins = !isNaN(s2) && !isNaN(race) && s2 === race;
+
+        if (p1Wins) {
+          score1El.classList.add('score-win');
+          score2El.classList.remove('score-win');
+          scoreBox.classList.remove('decisive'); 
+        } else if (p2Wins) {
+          score2El.classList.add('score-win');
+          score1El.classList.remove('score-win');
+          scoreBox.classList.remove('decisive');
+        } else {
+          score1El.classList.remove('score-win');
+          score2El.classList.remove('score-win');
+          if (!isNaN(s1) && !isNaN(s2) && !isNaN(race) && (s1 === race - 1 && s2 === race - 1)) {
             scoreBox.classList.add('decisive');
           } else {
             scoreBox.classList.remove('decisive');
           }
         }
+                // Populate player match history
+        const historyContainer = document.getElementById('playerMatchHistoryContainer');
+        const historyTitleEl = document.getElementById('playerMatchHistoryTitle');
+        const historyListEl = document.getElementById('playerMatchHistoryList');
+
+        if (data.playerHistory && data.playerHistory.length > 0) {
+          historyTitleEl.innerText = "Last matches:";
+          historyListEl.innerHTML = ''; // Clear previous entries
+          data.playerHistory.forEach(matchStr => {
+            const matchDiv = document.createElement('div');
+            matchDiv.innerText = matchStr;
+            historyListEl.appendChild(matchDiv);
+          });
+          historyContainer.style.display = 'block';
+        } else {
+          historyContainer.style.display = 'none';
+          historyTitleEl.innerText = ""; // Clear title if no history
+          historyListEl.innerHTML = ''; // Clear list if no history
+        }
+        previousScore1 = newScore1;
+        previousScore2 = newScore2;
 
       } catch (e) {
         console.error("Failed to update overlay", e);
+                // Optionally hide history on error
+        const historyContainer = document.getElementById('playerMatchHistoryContainer');
+        if (historyContainer) historyContainer.style.display = 'none';
       }
     }
 
