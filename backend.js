@@ -18,6 +18,19 @@ function getFullFlagUrl(src) {
   return src.startsWith('http') ? src : `https://www.epbf.com${src.replace('..', '')}`;
 }
 
+function formatRoundName(round) {
+  if (round.startsWith('SE - ')) {
+    round = round.replace('SE - ', '').trim();
+  }
+  const letters = round.match(/[A-Za-z]+/g) || [];
+  const digits = round.match(/\d+/g) || [];
+  return letters.map(w => w[0].toUpperCase()).join('') + (digits.join('') || '');
+}
+
+function extractLastName(name) {
+  return name.split(' ').find(part => part === part.toUpperCase()) || name;
+}
+
 app.get('/score', async (req, res) => {
   const { tournamentId, playerId } = req.query;
 
@@ -62,12 +75,9 @@ app.get('/score', async (req, res) => {
           const time = $(tds[1]).find('span.d-none.d-sm-block').text().trim();
           const matchId = $(tds[0]).text().trim();
 
-          if (
-            !player1 || !player2 ||
-            score1 === '' || score2 === '' ||
-            player1.toLowerCase().includes('walkover') ||
-            player2.toLowerCase().includes('walkover')
-          ) return;
+          if (!player1 || !player2 || score1 === '' || score2 === '' ||
+              player1.toLowerCase().includes('walkover') ||
+              player2.toLowerCase().includes('walkover')) return;
 
           all.push({
             matchId, time, round: currentRound,
@@ -79,7 +89,19 @@ app.get('/score', async (req, res) => {
     });
 
     if (!all.length) return res.status(404).json({ error: 'No matches found for player' });
-    return res.json({ allMatches: all });
+
+    // Create matchHistory excluding the last match
+    const history = all.slice(0, -1).map(match => {
+      const roundShort = formatRoundName(match.round);
+      const p1 = extractLastName(match.player1);
+      const p2 = extractLastName(match.player2);
+      return `${roundShort}: ${p1} ${match.score1} - ${match.score2} ${p2}`;
+    });
+
+    return res.json({
+      allMatches: all,
+      matchHistory: history
+    });
   } catch (e) {
     console.error(e);
     return res.status(500).json({ error: 'Failed to fetch or parse' });
