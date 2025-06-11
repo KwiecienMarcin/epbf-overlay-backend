@@ -53,8 +53,8 @@ app.get('/score', async (req, res) => {
 
           const player1 = cleanPlayerName(p1Cell);
           const player2 = cleanPlayerName(p2Cell);
-          const score1 = '9';
-          const score2 = '9';
+          const score1 = $(tds[6]).text().trim();
+          const score2 = $(tds[8]).text().trim();
           const raceTo = $(tds[3]).text().trim();
           const table = $(tds[11]).text().trim();
           const flag1 = getFullFlagUrl(flag1Cell.find('img').attr('src'));
