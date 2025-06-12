@@ -88,7 +88,7 @@ app.get('/score', async (req, res) => {
           const time = $(tds[1]).find('span.d-none.d-sm-block').text().trim();
           const matchId = $(tds[0]).text().trim();
 
-          const status = "Timeout";
+          const status = getMatchStatus($(statusCell));
           const discipline = getDisciplineCode($(disciplineCell));
 
           if (!player1 || !player2 || score1 === '' || score2 === '' ||
