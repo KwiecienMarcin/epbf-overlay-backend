@@ -31,6 +31,17 @@ function extractLastName(name) {
   return name.split(' ').find(part => part === part.toUpperCase()) || name;
 }
 
+function getMatchStatus(statusTd) {
+  const tooltip = statusTd.find('span').attr('title');
+  return tooltip ? tooltip.trim() : '';
+}
+
+function getDisciplineCode(disciplineTd) {
+  const imgSrc = disciplineTd.find('img').attr('src') || '';
+  const match = imgSrc.match(/(\d+)\.svg$/);
+  return match ? match[1] : '';
+}
+
 app.get('/score', async (req, res) => {
   const { tournamentId, playerId } = req.query;
 
@@ -53,12 +64,14 @@ app.get('/score', async (req, res) => {
       } else if ($tb.hasClass('round_table')) {
         $tb.find('tr').each((j, tr) => {
           const tds = $(tr).find('td');
-          if (tds.length < 12) return;
+          if (tds.length < 13) return;
 
           const p1Cell = $(tds[4]);
           const p2Cell = $(tds[10]);
           const flag1Cell = $(tds[5]);
           const flag2Cell = $(tds[9]);
+          const disciplineCell = $(tds[2]);
+          const statusCell = $(tds[13]);
 
           const hasP1 = p1Cell.find(`a[href*="player/show/${playerId}/"]`).length > 0;
           const hasP2 = p2Cell.find(`a[href*="player/show/${playerId}/"]`).length > 0;
@@ -74,8 +87,9 @@ app.get('/score', async (req, res) => {
           const flag2 = getFullFlagUrl(flag2Cell.find('img').attr('src'));
           const time = $(tds[1]).find('span.d-none.d-sm-block').text().trim();
           const matchId = $(tds[0]).text().trim();
-          const statusCell = tds[13] ? $(tds[13]) : null;
-          const status = statusCell?.find('span').attr('title')?.trim() || '';
+
+          const status = getMatchStatus($(statusCell));
+          const discipline = getDisciplineCode($(disciplineCell));
 
           if (!player1 || !player2 || score1 === '' || score2 === '' ||
               player1.toLowerCase().includes('walkover') ||
@@ -84,7 +98,7 @@ app.get('/score', async (req, res) => {
           all.push({
             matchId, time, round: currentRound,
             player1, player2, score1, score2, raceTo, table,
-            flag1, flag2, status
+            flag1, flag2, status, discipline
           });
         });
       }
