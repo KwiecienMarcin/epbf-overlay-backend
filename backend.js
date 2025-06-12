@@ -32,8 +32,9 @@ function extractLastName(name) {
 }
 
 function getMatchStatus(statusTd) {
-  const tooltip = statusTd.find('span').attr('title');
-  return tooltip ? tooltip.trim() : '';
+  // Szuka title w span, ale tylko ten, który ma tooltip
+  const spanWithTooltip = statusTd.find('span[data-toggle="tooltip"]');
+  return spanWithTooltip.attr('title')?.trim() || '';
 }
 
 function getDisciplineCode(disciplineTd) {
@@ -64,7 +65,7 @@ app.get('/score', async (req, res) => {
       } else if ($tb.hasClass('round_table')) {
         $tb.find('tr').each((j, tr) => {
           const tds = $(tr).find('td');
-          if (tds.length < 13) return;
+          if (tds.length < 14) return;
 
           const p1Cell = $(tds[4]);
           const p2Cell = $(tds[10]);
