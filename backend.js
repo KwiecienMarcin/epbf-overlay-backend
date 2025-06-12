@@ -32,7 +32,6 @@ function extractLastName(name) {
 }
 
 function getMatchStatus(statusTd) {
-  // Szuka title w span, ale tylko ten, który ma tooltip
   const spanWithTooltip = statusTd.find('span[data-toggle="tooltip"]');
   return spanWithTooltip.attr('title')?.trim() || '';
 }
@@ -65,14 +64,14 @@ app.get('/score', async (req, res) => {
       } else if ($tb.hasClass('round_table')) {
         $tb.find('tr').each((j, tr) => {
           const tds = $(tr).find('td');
-          if (tds.length < 14) return;
+          if (tds.length < 13) return; // poprawiony warunek
 
           const p1Cell = $(tds[4]);
           const p2Cell = $(tds[10]);
           const flag1Cell = $(tds[5]);
           const flag2Cell = $(tds[9]);
           const disciplineCell = $(tds[2]);
-          const statusCell = $(tds[13]);
+          const statusCell = $(tds[12]); // poprawiony indeks
 
           const hasP1 = p1Cell.find(`a[href*="player/show/${playerId}/"]`).length > 0;
           const hasP2 = p2Cell.find(`a[href*="player/show/${playerId}/"]`).length > 0;
@@ -125,4 +124,3 @@ app.get('/score', async (req, res) => {
 });
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-//123
