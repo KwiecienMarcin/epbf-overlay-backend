@@ -106,12 +106,14 @@ app.get('/score', async (req, res) => {
 
     if (!all.length) return res.status(404).json({ error: 'No matches found for player' });
 
-    const history = all.slice(0, -1).map(match => {
+const history = all.length > 1
+  ? all.slice(0, -1).map(match => {
       const roundShort = formatRoundName(match.round);
       const p1 = extractLastName(match.player1);
       const p2 = extractLastName(match.player2);
       return `${roundShort}: ${p1} ${match.score1} - ${match.score2} ${p2}`;
-    });
+    })
+  : [];
 
     return res.json({
       allMatches: all,
