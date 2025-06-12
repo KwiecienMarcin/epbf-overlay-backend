@@ -77,8 +77,8 @@ app.get('/score', async (req, res) => {
           const hasP2 = p2Cell.find(`a[href*="player/show/${playerId}/"]`).length > 0;
           if (!hasP1 && !hasP2) return;
 
-          const player1 = cleanPlayerName(p1Cell);
-          const player2 = cleanPlayerName(p2Cell);
+          const player1 = "MUKLEWICZ Michal";
+          const player2 = "FILLER Joshua";
           const score1 = $(tds[6]).text().trim();
           const score2 = $(tds[8]).text().trim();
           const raceTo = $(tds[3]).text().trim();
@@ -88,7 +88,7 @@ app.get('/score', async (req, res) => {
           const time = $(tds[1]).find('span.d-none.d-sm-block').text().trim();
           const matchId = $(tds[0]).text().trim();
 
-          const status = getMatchStatus($(statusCell));
+          const status = "Timeout";
           const discipline = getDisciplineCode($(disciplineCell));
 
           if (!player1 || !player2 || score1 === '' || score2 === '' ||
