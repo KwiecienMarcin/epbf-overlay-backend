@@ -53,7 +53,7 @@ app.get('/score', async (req, res) => {
       } else if ($tb.hasClass('round_table')) {
         $tb.find('tr').each((j, tr) => {
           const tds = $(tr).find('td');
-          if (tds.length < 12) return;
+          if (tds.length < 14) return;
 
           const p1Cell = $(tds[4]);
           const p2Cell = $(tds[10]);
@@ -74,6 +74,8 @@ app.get('/score', async (req, res) => {
           const flag2 = getFullFlagUrl(flag2Cell.find('img').attr('src'));
           const time = $(tds[1]).find('span.d-none.d-sm-block').text().trim();
           const matchId = $(tds[0]).text().trim();
+          const statusCell = $(tds[13]);
+          const status = statusCell.find('span').attr('title')?.trim() || '';
 
           if (!player1 || !player2 || score1 === '' || score2 === '' ||
               player1.toLowerCase().includes('walkover') ||
@@ -82,7 +84,7 @@ app.get('/score', async (req, res) => {
           all.push({
             matchId, time, round: currentRound,
             player1, player2, score1, score2, raceTo, table,
-            flag1, flag2
+            flag1, flag2, status
           });
         });
       }
@@ -90,7 +92,6 @@ app.get('/score', async (req, res) => {
 
     if (!all.length) return res.status(404).json({ error: 'No matches found for player' });
 
-    // Create matchHistory excluding the last match
     const history = all.slice(0, -1).map(match => {
       const roundShort = formatRoundName(match.round);
       const p1 = extractLastName(match.player1);
