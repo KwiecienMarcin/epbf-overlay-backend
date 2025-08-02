@@ -6,6 +6,9 @@ const cors = require('cors');
 const app = express();
 app.use(cors());
 
+const { File, Blob } = require('fetch-blob');
+global.File = File;
+global.Blob = Blob;
 
 const PORT = process.env.PORT || 3000;
 
