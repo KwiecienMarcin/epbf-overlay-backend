@@ -237,7 +237,7 @@ html, body {
   <!-- LEWA KOLUMNA -->
   <div id="logoLeftArea">
     <img id="logoLeft" src="austrian_open.png" alt="Austrian Open">
-    <div id="eventTitle">Austrian Open<br>St.&nbsp;Johann&nbsp;im&nbsp;Pongau</div>
+    <div id="eventTitle">Kamui Slovenian Open<br>Podcetrtek</div>
     <div id="roundName"></div>
     <div id="tableText">Table</div>
   </div>
@@ -397,27 +397,36 @@ html, body {
       alert.style.display = isTimeout ? 'block' : 'none';
     }
 
-    function buildHistory(arr){
-      const box  = document.getElementById('playerMatchHistoryContainer');
-      const list = document.getElementById('playerMatchHistoryList');
-      list.innerHTML='';
-      if(arr.length<=1){box.style.display='none';return;}
+function buildHistory(arr){
+  const box  = document.getElementById('playerMatchHistoryContainer');
+  const list = document.getElementById('playerMatchHistoryList');
+  list.innerHTML = '';
 
-      arr.forEach(e=>{
-        const div=document.createElement('div');
-        const m=/^(.+?:)?\s*(.*?)\s+(\d+)\s*-\s*(\d+)\s*(.*?)$/.exec(e);
-        if(m){
-          const [,pre,p1,s1,s2,p2]=m, pref=pre?pre.trim()+' ':''; 
-          div.innerHTML=(+s1>+s2)
-            ?`${pref}<strong>${p1}</strong> <strong>${s1}</strong> - ${s2} ${p2}`
-            :`${pref}${p1} ${s1} - <strong>${s2}</strong> <strong>${p2}</strong>`;
-        }else div.textContent=e;
-        list.appendChild(div);
-      });
+  if(arr.length === 0){
+    box.style.display = 'none';
+    return;
+  }
 
-      document.getElementById('playerMatchHistoryTitle').textContent='Last matches:';
-      box.style.display='block'; fitHistoryFont();
+  arr.forEach(e => {
+    const div = document.createElement('div');
+    const m = /^(.+?:)?\s*(.*?)\s+(\d+)\s*-\s*(\d+)\s*(.*?)$/.exec(e);
+    if(m){
+      const [, pre, p1, s1, s2, p2] = m;
+      const pref = pre ? pre.trim() + ' ' : '';
+      div.innerHTML = (+s1 > +s2)
+        ? `${pref}<strong>${p1}</strong> <strong>${s1}</strong> - ${s2} ${p2}`
+        : `${pref}${p1} ${s1} - <strong>${s2}</strong> <strong>${p2}</strong>`;
+    } else {
+      div.textContent = e;
     }
+    list.appendChild(div);
+  });
+
+  document.getElementById('playerMatchHistoryTitle').textContent = 'Last matches:';
+  box.style.display = 'block';
+  fitHistoryFont();
+}
+
 
     function fitHistoryFont(){
       const box=document.getElementById('playerMatchHistoryContainer');
